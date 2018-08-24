@@ -32,6 +32,7 @@ def _cli():
         'band_stop_min': args.band_stop_min,
         'band_stop_max': args.band_stop_max,
         'setup': args.setup,
+        'teardown': args.teardown,
         'brain_radius': args.brain_radius,
         'skip_seconds': args.skip_seconds
     }
@@ -49,7 +50,19 @@ def generate_parser(parser=None):
         parser = argparse.ArgumentParser(
             prog='dcan_signal_processing.py',
             description="""
-            Wraps the compiled FNL preproc Matlab script, version: %s.
+            Wraps the compiled DCAN Signal Processing Matlab script, 
+            version: %s.  Runs in 3 main modes:  [setup], [task], 
+            and [teardown].  
+            
+            [setup]: creates white matter and ventricular masks for regression, 
+            must be run prior to task.
+            
+            [task]: runs regressions on a given task/fmri and outputs a 
+            corrected dtseries, along with power 2014 motion numbers in an 
+            hdf5 (.mat) format file.
+            
+            [teardown]: concatenates any resting state runs into a single 
+            dtseries.
             """ % version,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
@@ -99,11 +112,11 @@ def generate_parser(parser=None):
                         help='number of filter coeffecients for the band-stop '
                              'filter.'
                         )
-    parser.add_argument('--band-stop-min', type=float,
+    parser.add_argument('--band-stop-min',
                         help='lower frequency (bpm) for the band-stop '
                              'motion filter.'
                         )
-    parser.add_argument('--band-stop-max', type=float,
+    parser.add_argument('--band-stop-max',
                         help='upper frequency (bpm) for the band-stop '
                              'motion filter.'
                         )
@@ -114,6 +127,10 @@ def generate_parser(parser=None):
                         help='prepare white matter and ventricle masks, '
                              'must be run prior to individual task runs.'
                         )
+    parser.add_argument('--teardown', action='store_true',
+                        help='after tasks have completed, concatenate resting '
+                             'state data and parcellate.'
+                        )
 
     return parser
 
@@ -122,9 +139,23 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
               filter_order=None, lower_bpf=None, upper_bpf=None,
               motion_filter_type=None, motion_filter_option=None,
               motion_filter_order=None, band_stop_min=None,
-              band_stop_max=None, setup=False, skip_seconds=None, **kwargs):
+              band_stop_max=None, setup=False, teardown=None,
+              skip_seconds=None, **kwargs):
     """
-    main function
+    main function with 3 modes:
+        setup, task, and teardown.
+
+    setup:
+    generates white matter and ventricular masks.
+
+    task:
+    Runs filtered movement regressors, calculates mean signal
+    in ventricles and white matter, then calls dcan signal processing matlab
+    script.
+
+    teardown:
+    concatenates resting state data and creates parcellated time series.
+
     :param subject: subject id
     :param output_folder: base output files folder for fmri pipeline
     :param task: name of task
@@ -140,6 +171,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
     :param band_stop_min: lower limit of motion bandstop filter
     :param band_stop_max: upper limit of motion bandstop filter
     :param setup: creates mask images, must be run prior to tasks.
+    :param teardown: concatenates resting state data and generates parcels.
     :param skip_seconds: number of seconds to cut of beginning of task.
     :param kwargs: additional parameters.  Can be used to override default
     paths of inputs and outputs.
@@ -174,7 +206,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         'vent_mean_signal': os.path.join(output_folder, 'MNINonLinear',
                                          'Results', task, version_name,
                                          '%s_vent_mean.txt' % task),
-        'output_dtseries': '%s_%s_Atlas.dtseries' % (task, version_name),
+        'output_dtseries': '%s_%s_Atlas.dtseries.nii' % (task, version_name),
         'result_dir': os.path.join(output_folder, 'MNINonLinear', 'Results',
                                    task, version_name),
         'output_motion_numbers': os.path.join(output_folder, 'MNINonLinear',
@@ -197,8 +229,9 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
         # create white matter and ventricle masks for regression
         make_masks(input_spec['segmentation'], output_spec['wm_mask'],
-
                    output_spec['vent_mask'])
+    elif teardown:
+        concat_and_parcellate()
     else:
         assert os.path.exists(output_spec['vent_mask']), \
             'must run this script with --setup flag prior to running ' \
@@ -220,7 +253,8 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 '%s_bs%s_%s_filtered_%s' % (version_name, band_stop_min,
                                             band_stop_max, movreg_basename)
                 )
-            executable = os.path.join(here, 'run_filtered_motion_regressors.sh')
+            executable = os.path.join(
+                here, 'bin', 'run_filtered_motion_regressors.sh')
             cmd = [executable, os.environ['MCROOT'],
                    input_spec['movement_regressors'], repetition_time,
                    motion_filter_option, motion_filter_order, band_stop_min,
@@ -238,7 +272,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
         # run signal processing on dtseries
         matlab_input = {
-            'path_wb_c': '{CARET7DIR}/wb_command',
+            'path_wb_c': '{CARET7DIR}/wb_command' % os.environ,
             'bp_order': filter_order,
             'lp_Hz': lower_bpf,
             'hp_Hz': upper_bpf,
@@ -261,12 +295,16 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             json.dump(matlab_input, fd)
 
         print('running %s matlab on %s' % (version_name, task))
-        executable = os.path.join(here, 'run_FNL_preproc_Matlab.sh')
+        executable = os.path.join(here, 'bin', 'run_FNL_preproc_Matlab.sh')
         cmd = [executable, os.environ['MCRROOT'], output_spec['config']]
         subprocess.run(cmd)
 
 
 def get_repetition_time(fmri):
+    """
+    :param fmri: path to fmri nifti.
+    :return: repetition time from pixdim4
+    """
     cmd = 'fslval {task} pixdim4'.format(task=fmri)
     popen = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
     repetition_time = float(popen.stdout)
@@ -274,12 +312,32 @@ def get_repetition_time(fmri):
 
 
 def mean_roi_signal(fmri, mask, output):
+    """
+    :param fmri: path to fmri nifti
+    :param mask: path to mask/roi nifti
+    :param output: output text file of time series of mean values within the
+    mask/roi
+    :return: None
+    """
     cmd = 'fslmeants -i {fmri} -o {output} -m {mask}'
     cmd = cmd.format(fmri=fmri, output=output, mask=mask)
     subprocess.run(cmd.split())
 
 
 def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
+    """
+    generates ventricular and white matter masks from a Desikan/FreeSurfer
+    segmentation file.  label constraints may be overridden.
+    :param segmentation: Desikan/FreeSurfer spec segmentation nifti file.
+    Does not need to be a cifti but must have labels according to FS lookup
+    table, including cortical parcellations.
+    :param wm_mask_out: binary white matter mask.
+    :param vent_mask_out: binary ventricular mask.
+    :param kwargs: dictionary of label value overrides.  You may override
+    default label number bounds for white matter and ventricle masks in the
+    segmentation file.
+    :return: None
+    """
 
     wd = os.path.dirname(wm_mask_out)
     # set parameter defaults
