@@ -13,6 +13,7 @@ def _cli():
 
 
 def generate_parser(parser=None):
+    # this script may be deprecated.
     if not parser:
         parser = argparse.ArgumentParser(
             prog='concatenate_dtseries.py',

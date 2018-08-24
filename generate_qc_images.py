@@ -65,10 +65,12 @@ def slice_to_png(scene, slice_number, output, **kwargs):
 
 
 def dense_png():
+    # loop over slice_to_png
     pass
 
 
 def silhouetted_mosaic():
+    # creates X_in_Y files ("slices" tool wrapper)
     pass
 
 
