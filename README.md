@@ -1,5 +1,10 @@
 # dcan signal processing
 
+\*\*
+This is a repository for the dcan labs bold signal processing. It is 
+forked from FNL\_preproc and is meant to take its place.
+\*\*
+
 This code repository consists of python wrappers and matlab scripts
 for signal processing of the bold signal extracted from fMRI data.
 This program is designed for the explicit output data of the HCP
