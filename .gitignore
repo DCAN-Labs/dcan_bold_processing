@@ -1,0 +1,12 @@
+*~
+*.orig
+*.prj
+axial_template_temp.scene
+templates/parasagittal_Tx_169_template.scene
+filtered_movement_regressors
+specific_filtered_movement_regressors
+analyses_v2
+FNL_preproc_Matlab
+mccExcludedFiles.log
+readme.txt
+requiredMCRProducts.txt
