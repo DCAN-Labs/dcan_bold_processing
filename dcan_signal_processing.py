@@ -31,10 +31,10 @@ def _cli():
         'motion_filter_order': args.motion_filter_order,
         'band_stop_min': args.band_stop_min,
         'band_stop_max': args.band_stop_max,
-        'setup': args.setup,
-        'teardown': args.teardown,
+        'skip_seconds': args.skip_seconds,
         'brain_radius': args.brain_radius,
-        'skip_seconds': args.skip_seconds
+        'setup': args.setup,
+        'teardown': args.teardown
     }
 
     return interface(**kwargs)
@@ -50,18 +50,18 @@ def generate_parser(parser=None):
         parser = argparse.ArgumentParser(
             prog='dcan_signal_processing.py',
             description="""
-            Wraps the compiled DCAN Signal Processing Matlab script, 
-            version: %s.  Runs in 3 main modes:  [setup], [task], 
-            and [teardown].  
-            
-            [setup]: creates white matter and ventricular masks for regression, 
+            Wraps the compiled DCAN Signal Processing Matlab script,
+            version: %s.  Runs in 3 main modes:  [setup], [task],
+            and [teardown].
+
+            [setup]: creates white matter and ventricular masks for regression,
             must be run prior to task.
-            
-            [task]: runs regressions on a given task/fmri and outputs a 
-            corrected dtseries, along with power 2014 motion numbers in an 
+
+            [task]: runs regressions on a given task/fmri and outputs a
+            corrected dtseries, along with power 2014 motion numbers in an
             hdf5 (.mat) format file.
-            
-            [teardown]: concatenates any resting state runs into a single 
+
+            [teardown]: concatenates any resting state runs into a single
             dtseries.
             """ % version,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -123,6 +123,9 @@ def generate_parser(parser=None):
     parser.add_argument('--skip-seconds', type=int, default=5,
                         help='number of seconds to cut off the beginning of '
                              'fmri time series.')
+    parser.add_argument('--contiguous_frames', type=int, default=9,
+                        help='number of contigious frames for power 2014 fd '
+                             'thresholding.')
     parser.add_argument('--setup', action='store_true',
                         help='prepare white matter and ventricle masks, '
                              'must be run prior to individual task runs.'
@@ -131,6 +134,9 @@ def generate_parser(parser=None):
                         help='after tasks have completed, concatenate resting '
                              'state data and parcellate.'
                         )
+    parser.add_argument('--brain-radius', type=int,
+                        help='radius of brain for computation of framewise '
+                             'displacement')
 
     return parser
 
@@ -139,8 +145,8 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
               filter_order=None, lower_bpf=None, upper_bpf=None,
               motion_filter_type=None, motion_filter_option=None,
               motion_filter_order=None, band_stop_min=None,
-              band_stop_max=None, setup=False, teardown=None,
-              skip_seconds=None, **kwargs):
+              band_stop_max=None, skip_seconds=None, brain_radius=None,
+              contiguous_frames=None, setup=False, teardown=None, **kwargs):
     """
     main function with 3 modes:
         setup, task, and teardown.
@@ -170,9 +176,11 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
     :param motion_filter_order: bandstop filter order
     :param band_stop_min: lower limit of motion bandstop filter
     :param band_stop_max: upper limit of motion bandstop filter
+    :param skip_seconds: number of seconds to cut of beginning of task.
+    :param brain_radius: radius for estimation of angular motion regressors
+    :param contiguous_frames: minimum contigious frames for fd thresholding.
     :param setup: creates mask images, must be run prior to tasks.
     :param teardown: concatenates resting state data and generates parcels.
-    :param skip_seconds: number of seconds to cut of beginning of task.
     :param kwargs: additional parameters.  Can be used to override default
     paths of inputs and outputs.
     :return:
@@ -231,6 +239,20 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         make_masks(input_spec['segmentation'], output_spec['wm_mask'],
                    output_spec['vent_mask'])
     elif teardown:
+        # setup inputs, then run analyses_v2
+        repetition_time = get_repetition_time(input_spec['fmri_volume'])
+        analyses_v2_config = {
+                    'path_wb_c': '{CARET7DIR}/wb_command' % os.environ,
+                    'epi_TR': repitition_time,
+                    'summary_Dir': output_spec['summary_folder'],
+                    'brain_radius_in_mm': brain_radius,
+                    'expected_contiguous_frame_count': contiguous_frames,
+                    'result_dir': output_spec['result_dir'],
+                    'path_motion_numbers': None, # @TODO get motion numbers
+                    'path_ciftis': None # @TODO get ciftis
+                    'path_timecourses': None # @TODO get timecourses
+                    'skip_seconds': skip_seconds
+                }
         concat_and_parcellate()
     else:
         assert os.path.exists(output_spec['vent_mask']), \
