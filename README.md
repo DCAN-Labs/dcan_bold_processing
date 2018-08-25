@@ -11,6 +11,19 @@ This program is designed for the explicit output data of the HCP
 fMRI pipeline or its DCAN derivative. It is not intended for use with
 other preprocessed data, so use at your own peril.
 
+
+## installation
+
+Installation requires use of the matlab compiler tool distributed with 
+matlab, or acquiring an up-to-date version of the binaries.
+
+git clone git@gitlab.com:Fair\_lab/dcan\_signal\_processing.git
+
+cd dcan\_signal\_processing
+
+./compile.sh <matlab compiler>
+
+
 ## dcan\_signal\_processing.py
 
 main wrapper for signal processing scripts.
