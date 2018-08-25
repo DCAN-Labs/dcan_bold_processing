@@ -21,7 +21,7 @@ git clone git@gitlab.com:Fair\_lab/dcan\_signal\_processing.git
 
 cd dcan\_signal\_processing
 
-./compile.sh <matlab compiler>
+./compile.sh \<matlab compiler path\>
 
 
 ## dcan\_signal\_processing.py
