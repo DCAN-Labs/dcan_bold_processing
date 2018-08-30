@@ -215,6 +215,10 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                                          'Results', task, version_name,
                                          '%s_vent_mean.txt' % task),
         'output_dtseries': '%s_%s_Atlas.dtseries.nii' % (task, version_name),
+        'output_ciftis': os.path.join(output_folder, version_name,
+                                      'analyses_v2','workbench'),
+        'output_timecourses': os.path.join(output_folder, version_name,
+                                      'analyses_v2','timecourses'),
         'result_dir': os.path.join(output_folder, 'MNINonLinear', 'Results',
                                    task, version_name),
         'output_motion_numbers': os.path.join(output_folder, 'MNINonLinear',
@@ -248,9 +252,9 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                     'brain_radius_in_mm': brain_radius,
                     'expected_contiguous_frame_count': contiguous_frames,
                     'result_dir': output_spec['result_dir'],
-                    'path_motion_numbers': None, # @TODO get motion numbers
-                    'path_ciftis': None # @TODO get ciftis
-                    'path_timecourses': None # @TODO get timecourses
+                    'path_motion_numbers': output_spec['output_motion_numbers'],
+                    'path_ciftis': output_spec['output_ciftis'],
+                    'path_timecourses': output_spec['output_timecourses'],
                     'skip_seconds': skip_seconds
                 }
         concat_and_parcellate()
