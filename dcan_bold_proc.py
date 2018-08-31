@@ -190,43 +190,43 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
     # standard input and output folder locations.
     input_spec = {
-        'segmentation': os.path.join(output_folder, 'MNINonLinear', 'ROIs',
-                                     'wmparc.2.nii.gz'),
+        'dtseries': os.path.join(output_folder, 'MNINonLinear', 'Results',
+                                 task, '%s_Atlas.dtseries.nii' % task),
         'fmri_volume': os.path.join(output_folder, 'MNINonLinear', 'Results',
                                     task, '%s.nii.gz' % task),
         'movement_regressors': os.path.join(output_folder, 'MNINonLinear',
                                             'Results', task,
                                             'Movement_Regressors.txt'),
-        'dtseries': os.path.join(output_folder, 'MNINonLinear', 'Results',
-                                 task, '%s_Atlas.dtseries.nii' % task)
+        'segmentation': os.path.join(output_folder, 'MNINonLinear', 'ROIs',
+                                     'wmparc.2.nii.gz')
     }
     input_spec.update(kwargs.get('input_spec', {}))
     output_spec = {
-        'summary_folder': os.path.join(output_folder, 'MNINonLinear',
-                                       'summary_%s' % version_name),
-        'wm_mask': os.path.join(output_folder, 'MNINonLinear',
-                                'wm_2mm_%s_mask_eroded.nii.gz' % subject),
-        'vent_mask': os.path.join(output_folder, 'MNINonLinear',
-                                  'vent_2mm_%s_mask_eroded.nii.gz' % subject),
-        'wm_mean_signal': os.path.join(output_folder, 'MNINonLinear', 'Results',
-                                       task, version_name, '%s_wm_mean.txt' %
-                                       task),
-        'vent_mean_signal': os.path.join(output_folder, 'MNINonLinear',
-                                         'Results', task, version_name,
-                                         '%s_vent_mean.txt' % task),
-        'output_dtseries': '%s_%s_Atlas.dtseries.nii' % (task, version_name),
+        'config': os.path.join(output_folder, 'MNINonLinear', 'Results', task,
+                               version_name,
+                               '%s_mat_config.json' % version_name),
         'output_ciftis': os.path.join(output_folder, version_name,
                                       'analyses_v2','workbench'),
+        'output_dtseries': '%s_%s_Atlas.dtseries.nii' % (task, version_name),
+        'output_motion_numbers': os.path.join(output_folder, 'MNINonLinear',
+                                              'Results', task, version_name,
+                                              'motion_numbers.txt'),
         'output_timecourses': os.path.join(output_folder, version_name,
                                       'analyses_v2','timecourses'),
         'result_dir': os.path.join(output_folder, 'MNINonLinear', 'Results',
                                    task, version_name),
-        'output_motion_numbers': os.path.join(output_folder, 'MNINonLinear',
-                                              'Results', task, version_name,
-                                              'motion_numbers.txt'),
-        'config': os.path.join(output_folder, 'MNINonLinear', 'Results', task,
-                               version_name,
-                               '%s_mat_config.json' % version_name)
+        'summary_folder': os.path.join(output_folder, 'MNINonLinear',
+                                       'summary_%s' % version_name),
+        'vent_mask': os.path.join(output_folder, 'MNINonLinear',
+                                  'vent_2mm_%s_mask_eroded.nii.gz' % subject),
+        'vent_mean_signal': os.path.join(output_folder, 'MNINonLinear',
+                                         'Results', task, version_name,
+                                         '%s_vent_mean.txt' % task),
+        'wm_mask': os.path.join(output_folder, 'MNINonLinear',
+                                'wm_2mm_%s_mask_eroded.nii.gz' % subject),
+        'wm_mean_signal': os.path.join(output_folder, 'MNINonLinear', 'Results',
+                                       task, version_name, '%s_wm_mean.txt' %
+                                       task)
     }
     output_spec.update(kwargs.get('output_spec', {}))
 
