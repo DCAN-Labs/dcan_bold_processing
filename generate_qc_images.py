@@ -61,7 +61,7 @@ def slice_to_png(scene, slice_number, output, **kwargs):
     cmdfmt = '{wb_command} -show-scene {scene} {slice_number} {output} ' \
              '{dimx} {dimy}'
     cmd = cmdfmt.format(**kwargs)
-    subprocess.run(cmd, stderr=kwargs['stderr'], stdout=kwargs['stdout'])
+    subprocess.call(cmd, stderr=kwargs['stderr'], stdout=kwargs['stdout'])
 
 
 def dense_png():

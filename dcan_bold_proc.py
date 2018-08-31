@@ -25,9 +25,9 @@ def _cli():
         'filter_order': args.filter_order,
         'lower_bpf': args.lower_bpf,
         'upper_bpf': args.upper_bpf,
-        'motion_filter_type': args.filter_type,
+        'motion_filter_type': args.motion_filter_type,
         'physio': args.physio,
-        'motion_filter_option': args.filter_option,
+        'motion_filter_option': args.motion_filter_option,
         'motion_filter_order': args.motion_filter_order,
         'band_stop_min': args.band_stop_min,
         'band_stop_max': args.band_stop_max,
@@ -91,12 +91,11 @@ def generate_parser(parser=None):
     parser.add_argument('--upper-bpf', type=float, default=0.080,
                         help='upper cut-off frequency (Hz) for the butterworth '
                              'bandpass filter.')
-    parser.add_argument('--motion-filter-type', default=None,
+    parser.add_argument('--motion-filter-type', choices=['notch','lp'], default=None,
                         help='type of band-stop filter to use for removing '
                              'respiratory artifact from motion regressors. '
                              'Current options are \'notch\' for a notch '
-                             'filter or \'lp\' for a lowpass filter, or None '
-                             'for singleband or slow TR data.'
+                             'filter or \'lp\' for a lowpass filter.'
                         )
     parser.add_argument('--physio',
                         help='input .tsv file containing physio data to '
@@ -112,11 +111,11 @@ def generate_parser(parser=None):
                         help='number of filter coeffecients for the band-stop '
                              'filter.'
                         )
-    parser.add_argument('--band-stop-min',
+    parser.add_argument('--band-stop-min', type=float,
                         help='lower frequency (bpm) for the band-stop '
                              'motion filter.'
                         )
-    parser.add_argument('--band-stop-max',
+    parser.add_argument('--band-stop-max', type=float,
                         help='upper frequency (bpm) for the band-stop '
                              'motion filter.'
                         )
@@ -282,11 +281,11 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             executable = os.path.join(
                 here, 'bin', 'run_filtered_motion_regressors.sh')
             cmd = [executable, os.environ['MCROOT'],
-                   input_spec['movement_regressors'], repetition_time,
-                   motion_filter_option, motion_filter_order, band_stop_min,
-                   motion_filter_type, band_stop_min, band_stop_max,
+                   input_spec['movement_regressors'], str(repetition_time),
+                   str(motion_filter_option), str(motion_filter_order), str(band_stop_min),
+                   motion_filter_type, str(band_stop_min), str(band_stop_max),
                    filtered_movement_regressors]
-            subprocess.run(cmd)
+            subprocess.call(cmd)
             # update input movement regressors
             input_spec['movement_regressors'] = filtered_movement_regressors
 
@@ -323,7 +322,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         print('running %s matlab on %s' % (version_name, task))
         executable = os.path.join(here, 'bin', 'run_FNL_preproc_Matlab.sh')
         cmd = [executable, os.environ['MCRROOT'], output_spec['config']]
-        subprocess.run(cmd)
+        subprocess.call(cmd)
 
 
 def get_repetition_time(fmri):
@@ -332,8 +331,9 @@ def get_repetition_time(fmri):
     :return: repetition time from pixdim4
     """
     cmd = 'fslval {task} pixdim4'.format(task=fmri)
-    popen = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
-    repetition_time = float(popen.stdout)
+    popen = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+    stdout,stderr = popen.communicate()
+    repetition_time = float(stdout)
     return repetition_time
 
 
@@ -347,7 +347,7 @@ def mean_roi_signal(fmri, mask, output):
     """
     cmd = 'fslmeants -i {fmri} -o {output} -m {mask}'
     cmd = cmd.format(fmri=fmri, output=output, mask=mask)
-    subprocess.run(cmd.split())
+    subprocess.call(cmd.split())
 
 
 def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
@@ -404,10 +404,10 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
     kwargs.update(tempfiles)
     for cmdfmt in cmdlist:
         cmd = cmdfmt.format(**kwargs)
-        subprocess.run(cmd.split())
+        subprocess.call(cmd.split())
     # cleanup
-    for temp in tempfiles:
-        os.remove(temp)
+    for key in tempfiles.keys():
+        os.remove(tempfiles[key])
 
 
 def concat_and_parcellate(task_basenames, **kwargs):
