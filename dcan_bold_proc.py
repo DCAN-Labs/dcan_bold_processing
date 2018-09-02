@@ -6,7 +6,7 @@ import os
 import subprocess
 
 here = os.path.dirname(os.path.realpath(__file__))
-version = 'v4.0.0'
+version = '4.0.0'
 
 
 def _cli():
@@ -185,7 +185,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
     :return:
     """
     # name should only reflect release version, not filter usage.
-    version_name = 'DCANSigProc_%s' % version
+    version_name = 'DCANBOLDProc_v%s' % version
 
     # standard input and output folder locations.
     input_spec = {
@@ -238,6 +238,10 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             elif os.path.exists(value):
                 os.remove(value)
 
+        # create the result_dir
+        if not os.path.exists(output_spec['result_dir']):
+            os.mkdir(output_spec['result_dir'])
+
         # create white matter and ventricle masks for regression
         make_masks(input_spec['segmentation'], output_spec['wm_mask'],
                    output_spec['vent_mask'])
@@ -279,12 +283,13 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                                             band_stop_max, movreg_basename)
                 )
             executable = os.path.join(
-                here, 'bin', 'run_filtered_motion_regressors.sh')
+                here, 'bin', 'run_filtered_movement_regressors.sh')
             cmd = [executable, os.environ['MCROOT'],
                    input_spec['movement_regressors'], str(repetition_time),
                    str(motion_filter_option), str(motion_filter_order), str(band_stop_min),
                    motion_filter_type, str(band_stop_min), str(band_stop_max),
                    filtered_movement_regressors]
+
             subprocess.call(cmd)
             # update input movement regressors
             input_spec['movement_regressors'] = filtered_movement_regressors
