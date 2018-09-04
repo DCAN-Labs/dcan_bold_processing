@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import subprocess
+import shutil
 
 here = os.path.dirname(os.path.realpath(__file__))
 version = '4.0.0'
@@ -239,7 +240,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 if os.path.isfile(value) or os.path.islink(value):
                     os.remove(value)
                 elif os.path.isdir(value):
-                    os.rmtree(value)
+                    shutil.rmtree(value)
 
         # create white matter and ventricle masks for regression
         make_masks(input_spec['segmentation'], output_spec['wm_mask'],
@@ -272,7 +273,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 if os.path.isfile(value) or os.path.islink(value):
                     os.remove(value)
                 elif os.path.isdir(value):
-                    os.rmtree(value)
+                    shutil.rmtree(value)
 
         # create the result_dir
         if not os.path.exists(output_spec['result_dir']):
@@ -290,7 +291,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 )
             executable = os.path.join(
                 here, 'bin', 'run_filtered_movement_regressors.sh')
-            cmd = [executable, os.environ['MCROOT'],
+            cmd = [executable, os.environ['MCRROOT'],
                    input_spec['movement_regressors'], str(repetition_time),
                    str(motion_filter_option), str(motion_filter_order), str(band_stop_min),
                    motion_filter_type, str(band_stop_min), str(band_stop_max),

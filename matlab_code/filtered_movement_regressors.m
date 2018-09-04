@@ -67,9 +67,9 @@ end
 
 
 %% Read individual movement regressors files
-if isdir(path_mov_reg)
+if exist(path_mov_reg) == 7
     pathstring = [path_mov_reg filesep '*' filesep 'Movement_Regressors.txt'];
-elseif isfile(path_mov_reg)
+elseif exist(path_mov_reg) == 2
     pathstring = path_mov_reg;
 else
     disp([path_mov_reg ' does not exist. Exiting...'])
