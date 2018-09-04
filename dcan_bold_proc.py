@@ -293,7 +293,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 )
             executable = os.path.join(
                 here, 'bin', 'run_filtered_movement_regressors.sh')
-            cmd = [executable, os.environ['MCRROOT'],
+            cmd = [executable, os.environ['MCRROOT'], task,
                    input_spec['movement_regressors'], str(repetition_time),
                    str(motion_filter_option), str(motion_filter_order), str(band_stop_min),
                    motion_filter_type, str(band_stop_min), str(band_stop_max),
@@ -335,7 +335,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
         print('running %s matlab on %s' % (version_name, task))
         executable = os.path.join(here, 'bin', 'run_dcan_signal_processsing.sh')
-        cmd = [executable, os.environ['MCRROOT'], output_spec['config']]
+        cmd = [executable, os.environ['MCRROOT'], task, output_spec['config']]
         subprocess.call(cmd)
 
 

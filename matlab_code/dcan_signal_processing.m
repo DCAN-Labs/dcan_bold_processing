@@ -99,8 +99,8 @@ try
     
 catch ME
     disp(ME.message)
-    disp(['Check your Movement_Regressors.txt for inconsistencies.  '
-    'Exiting...'])
+    disp(['Check your Movement_Regressors.txt for inconsistencies.  ' ...
+          'Exiting...'])
     exit
 end
 
