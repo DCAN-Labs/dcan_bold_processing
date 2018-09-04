@@ -6,7 +6,7 @@ import os
 import subprocess
 
 here = os.path.dirname(os.path.realpath(__file__))
-version = 'v4.0.0'
+version = '4.0.0'
 
 
 def _cli():
@@ -25,9 +25,9 @@ def _cli():
         'filter_order': args.filter_order,
         'lower_bpf': args.lower_bpf,
         'upper_bpf': args.upper_bpf,
-        'motion_filter_type': args.filter_type,
+        'motion_filter_type': args.motion_filter_type,
         'physio': args.physio,
-        'motion_filter_option': args.filter_option,
+        'motion_filter_option': args.motion_filter_option,
         'motion_filter_order': args.motion_filter_order,
         'band_stop_min': args.band_stop_min,
         'band_stop_max': args.band_stop_max,
@@ -91,12 +91,11 @@ def generate_parser(parser=None):
     parser.add_argument('--upper-bpf', type=float, default=0.080,
                         help='upper cut-off frequency (Hz) for the butterworth '
                              'bandpass filter.')
-    parser.add_argument('--motion-filter-type', default=None,
+    parser.add_argument('--motion-filter-type', choices=['notch','lp'], default=None,
                         help='type of band-stop filter to use for removing '
                              'respiratory artifact from motion regressors. '
                              'Current options are \'notch\' for a notch '
-                             'filter or \'lp\' for a lowpass filter, or None '
-                             'for singleband or slow TR data.'
+                             'filter or \'lp\' for a lowpass filter.'
                         )
     parser.add_argument('--physio',
                         help='input .tsv file containing physio data to '
@@ -112,11 +111,11 @@ def generate_parser(parser=None):
                         help='number of filter coeffecients for the band-stop '
                              'filter.'
                         )
-    parser.add_argument('--band-stop-min',
+    parser.add_argument('--band-stop-min', type=float,
                         help='lower frequency (bpm) for the band-stop '
                              'motion filter.'
                         )
-    parser.add_argument('--band-stop-max',
+    parser.add_argument('--band-stop-max', type=float,
                         help='upper frequency (bpm) for the band-stop '
                              'motion filter.'
                         )
@@ -186,43 +185,47 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
     :return:
     """
     # name should only reflect release version, not filter usage.
-    version_name = 'DCANSigProc_%s' % version
+    version_name = 'DCANBOLDProc_v%s' % version
 
     # standard input and output folder locations.
     input_spec = {
-        'segmentation': os.path.join(output_folder, 'MNINonLinear', 'ROIs',
-                                     'wmparc.2.nii.gz'),
+        'dtseries': os.path.join(output_folder, 'MNINonLinear', 'Results',
+                                 task, '%s_Atlas.dtseries.nii' % task),
         'fmri_volume': os.path.join(output_folder, 'MNINonLinear', 'Results',
                                     task, '%s.nii.gz' % task),
         'movement_regressors': os.path.join(output_folder, 'MNINonLinear',
                                             'Results', task,
                                             'Movement_Regressors.txt'),
-        'dtseries': os.path.join(output_folder, 'MNINonLinear', 'Results',
-                                 task, '%s_Atlas.dtseries.nii' % task)
+        'segmentation': os.path.join(output_folder, 'MNINonLinear', 'ROIs',
+                                     'wmparc.2.nii.gz')
     }
     input_spec.update(kwargs.get('input_spec', {}))
     output_spec = {
-        'summary_folder': os.path.join(output_folder, 'MNINonLinear',
-                                       'summary_%s' % version_name),
-        'wm_mask': os.path.join(output_folder, 'MNINonLinear',
-                                'wm_2mm_%s_mask_eroded.nii.gz' % subject),
-        'vent_mask': os.path.join(output_folder, 'MNINonLinear',
-                                  'vent_2mm_%s_mask_eroded.nii.gz' % subject),
-        'wm_mean_signal': os.path.join(output_folder, 'MNINonLinear', 'Results',
-                                       task, version_name, '%s_wm_mean.txt' %
-                                       task),
-        'vent_mean_signal': os.path.join(output_folder, 'MNINonLinear',
-                                         'Results', task, version_name,
-                                         '%s_vent_mean.txt' % task),
+        'config': os.path.join(output_folder, 'MNINonLinear', 'Results', task,
+                               version_name,
+                               '%s_mat_config.json' % version_name),
+        'output_ciftis': os.path.join(output_folder, version_name,
+                                      'analyses_v2','workbench'),
         'output_dtseries': '%s_%s_Atlas.dtseries.nii' % (task, version_name),
-        'result_dir': os.path.join(output_folder, 'MNINonLinear', 'Results',
-                                   task, version_name),
         'output_motion_numbers': os.path.join(output_folder, 'MNINonLinear',
                                               'Results', task, version_name,
                                               'motion_numbers.txt'),
-        'config': os.path.join(output_folder, 'MNINonLinear', 'Results', task,
-                               version_name,
-                               '%s_mat_config.json' % version_name)
+        'output_timecourses': os.path.join(output_folder, version_name,
+                                      'analyses_v2','timecourses'),
+        'result_dir': os.path.join(output_folder, 'MNINonLinear', 'Results',
+                                   task, version_name),
+        'summary_folder': os.path.join(output_folder, 'MNINonLinear',
+                                       'summary_%s' % version_name),
+        'vent_mask': os.path.join(output_folder, 'MNINonLinear',
+                                  'vent_2mm_%s_mask_eroded.nii.gz' % subject),
+        'vent_mean_signal': os.path.join(output_folder, 'MNINonLinear',
+                                         'Results', task, version_name,
+                                         '%s_vent_mean.txt' % task),
+        'wm_mask': os.path.join(output_folder, 'MNINonLinear',
+                                'wm_2mm_%s_mask_eroded.nii.gz' % subject),
+        'wm_mean_signal': os.path.join(output_folder, 'MNINonLinear', 'Results',
+                                       task, version_name, '%s_wm_mean.txt' %
+                                       task)
     }
     output_spec.update(kwargs.get('output_spec', {}))
 
@@ -234,6 +237,10 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 continue
             elif os.path.exists(value):
                 os.remove(value)
+
+        # create the result_dir
+        if not os.path.exists(output_spec['result_dir']):
+            os.mkdir(output_spec['result_dir'])
 
         # create white matter and ventricle masks for regression
         make_masks(input_spec['segmentation'], output_spec['wm_mask'],
@@ -248,9 +255,9 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                     'brain_radius_in_mm': brain_radius,
                     'expected_contiguous_frame_count': contiguous_frames,
                     'result_dir': output_spec['result_dir'],
-                    'path_motion_numbers': None, # @TODO get motion numbers
-                    'path_ciftis': None # @TODO get ciftis
-                    'path_timecourses': None # @TODO get timecourses
+                    'path_motion_numbers': output_spec['output_motion_numbers'],
+                    'path_ciftis': output_spec['output_ciftis'],
+                    'path_timecourses': output_spec['output_timecourses'],
                     'skip_seconds': skip_seconds
                 }
         concat_and_parcellate()
@@ -276,13 +283,14 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                                             band_stop_max, movreg_basename)
                 )
             executable = os.path.join(
-                here, 'bin', 'run_filtered_motion_regressors.sh')
+                here, 'bin', 'run_filtered_movement_regressors.sh')
             cmd = [executable, os.environ['MCROOT'],
-                   input_spec['movement_regressors'], repetition_time,
-                   motion_filter_option, motion_filter_order, band_stop_min,
-                   motion_filter_type, band_stop_min, band_stop_max,
+                   input_spec['movement_regressors'], str(repetition_time),
+                   str(motion_filter_option), str(motion_filter_order), str(band_stop_min),
+                   motion_filter_type, str(band_stop_min), str(band_stop_max),
                    filtered_movement_regressors]
-            subprocess.run(cmd)
+
+            subprocess.call(cmd)
             # update input movement regressors
             input_spec['movement_regressors'] = filtered_movement_regressors
 
@@ -319,7 +327,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         print('running %s matlab on %s' % (version_name, task))
         executable = os.path.join(here, 'bin', 'run_FNL_preproc_Matlab.sh')
         cmd = [executable, os.environ['MCRROOT'], output_spec['config']]
-        subprocess.run(cmd)
+        subprocess.call(cmd)
 
 
 def get_repetition_time(fmri):
@@ -328,8 +336,9 @@ def get_repetition_time(fmri):
     :return: repetition time from pixdim4
     """
     cmd = 'fslval {task} pixdim4'.format(task=fmri)
-    popen = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
-    repetition_time = float(popen.stdout)
+    popen = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+    stdout,stderr = popen.communicate()
+    repetition_time = float(stdout)
     return repetition_time
 
 
@@ -343,7 +352,7 @@ def mean_roi_signal(fmri, mask, output):
     """
     cmd = 'fslmeants -i {fmri} -o {output} -m {mask}'
     cmd = cmd.format(fmri=fmri, output=output, mask=mask)
-    subprocess.run(cmd.split())
+    subprocess.call(cmd.split())
 
 
 def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
@@ -400,10 +409,10 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
     kwargs.update(tempfiles)
     for cmdfmt in cmdlist:
         cmd = cmdfmt.format(**kwargs)
-        subprocess.run(cmd.split())
+        subprocess.call(cmd.split())
     # cleanup
-    for temp in tempfiles:
-        os.remove(temp)
+    for key in tempfiles.keys():
+        os.remove(tempfiles[key])
 
 
 def concat_and_parcellate(task_basenames, **kwargs):

@@ -67,7 +67,7 @@ end
 
 
 %% Read individual movement regressors files
-if isfolder(path_mov_reg)
+if isdir(path_mov_reg)
     pathstring = [path_mov_reg filesep '*' filesep 'Movement_Regressors.txt'];
 elseif isfile(path_mov_reg)
     pathstring = path_mov_reg;
