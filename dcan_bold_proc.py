@@ -249,7 +249,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         # setup inputs, then run analyses_v2
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
         analyses_v2_config = {
-                    'path_wb_c': '{CARET7DIR}/wb_command' % os.environ,
+                    'path_wb_c': '%s/wb_command' % os.environ['CARET7DIR'],
                     'epi_TR': repitition_time,
                     'summary_Dir': output_spec['summary_folder'],
                     'brain_radius_in_mm': brain_radius,
@@ -309,7 +309,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
         # run signal processing on dtseries
         matlab_input = {
-            'path_wb_c': '{CARET7DIR}/wb_command' % os.environ,
+            'path_wb_c': '%s/wb_command' % os.environ['CARET7DIR'],
             'bp_order': filter_order,
             'lp_Hz': lower_bpf,
             'hp_Hz': upper_bpf,
