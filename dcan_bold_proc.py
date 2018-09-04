@@ -238,7 +238,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             elif os.path.exists(value):
                 if os.path.isfile(value) or os.path.islink(value):
                     os.remove(value)
-                elif os.path.isdir(value)
+                elif os.path.isdir(value):
                     os.rmtree(value)
 
         # create white matter and ventricle masks for regression
@@ -271,7 +271,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             if task in value and os.path.exists(value):
                 if os.path.isfile(value) or os.path.islink(value):
                     os.remove(value)
-                elif os.path.isdir(value)
+                elif os.path.isdir(value):
                     os.rmtree(value)
 
         # create the result_dir
