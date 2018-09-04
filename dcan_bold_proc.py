@@ -236,11 +236,10 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             if task in value:
                 continue
             elif os.path.exists(value):
-                os.remove(value)
-
-        # create the result_dir
-        if not os.path.exists(output_spec['result_dir']):
-            os.mkdir(output_spec['result_dir'])
+                if os.path.isfile(value) or os.path.islink(value):
+                    os.remove(value)
+                elif os.path.isdir(value)
+                    os.rmtree(value)
 
         # create white matter and ventricle masks for regression
         make_masks(input_spec['segmentation'], output_spec['wm_mask'],
@@ -270,7 +269,14 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         # delete existing results
         for value in output_spec.values():
             if task in value and os.path.exists(value):
-                os.remove(value)
+                if os.path.isfile(value) or os.path.islink(value):
+                    os.remove(value)
+                elif os.path.isdir(value)
+                    os.rmtree(value)
+
+        # create the result_dir
+        if not os.path.exists(output_spec['result_dir']):
+            os.mkdir(output_spec['result_dir'])
 
         # filter motion regressors if a bandstop filter is specified
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
