@@ -215,8 +215,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                                       'analyses_v2','timecourses'),
         'result_dir': os.path.join(output_folder, 'MNINonLinear', 'Results',
                                    task, version_name),
-        'summary_folder': os.path.join(output_folder, 'MNINonLinear',
-                                       'summary_%s' % version_name),
+        'summary_folder': os.path.join(output_folder, 'summary_%s' % version_name),
         'vent_mask': os.path.join(output_folder, 'MNINonLinear',
                                   'vent_2mm_%s_mask_eroded.nii.gz' % subject),
         'vent_mean_signal': os.path.join(output_folder, 'MNINonLinear',
@@ -241,6 +240,9 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                     os.remove(value)
                 elif os.path.isdir(value):
                     shutil.rmtree(value)
+
+        if not os.path.exists(output_spec['summary_folder']):
+            os.mkdir(output_spec['summary_folder'])
 
         # create white matter and ventricle masks for regression
         make_masks(input_spec['segmentation'], output_spec['wm_mask'],
