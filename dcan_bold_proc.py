@@ -332,7 +332,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             json.dump(matlab_input, fd)
 
         print('running %s matlab on %s' % (version_name, task))
-        executable = os.path.join(here, 'bin', 'run_FNL_preproc_Matlab.sh')
+        executable = os.path.join(here, 'bin', 'run_dcan_signal_processsing.sh')
         cmd = [executable, os.environ['MCRROOT'], output_spec['config']]
         subprocess.call(cmd)
 

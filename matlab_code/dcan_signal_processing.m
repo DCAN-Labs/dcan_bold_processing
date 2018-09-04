@@ -1,4 +1,4 @@
-function DCAN_Signal_Processing(config_path)
+function dcan_signal_processing(config_path)
 % DCAN Signal Processsing
 %
 %  runs motion filtering and signal regression on HCP grayordinate results.
