@@ -134,8 +134,8 @@ FNL_preproc_CIFTI_resid_name = strcat(FNL_preproc_CIFTI_basename, ...
                                       '_resid.dtseries.nii');
 dlmwrite(cifti_resid_txt_path, Rr','delimiter' , ' ');
 
-cmd = [path_wb_c ' -cifti-convert -from-text ' cifti_resid_txt_path ' '
-       path_cii ' ' result_dir '/' FNL_preproc_CIFTI_resid_name];
+cmd = [path_wb_c ' -cifti-convert -from-text ' cifti_resid_txt_path ' ' ...
+       path_cii ' ' result_dir filesep FNL_preproc_CIFTI_resid_name];
 
 system(cmd);
 system(['rm -f ' cifti_resid_txt_path]);
@@ -153,7 +153,7 @@ if ix_in <= 10
 end
 
 Rr_int = Rr;
-int_method_label = ['Using ' int_method 
+int_method_label = ['Using ' int_method ...
     ' interpolation before filtering in the time domain'];
 
 switch int_method
@@ -192,7 +192,7 @@ DVAR_post_all = dvars_from_cifti(Y);
 % Quick visualization of results
 %% remake cifti
 dlmwrite(cifti_txt_path, Y','delimiter' ,' ');
-cmd = [path_wb_c ' -cifti-convert -from-text ' cifti_txt_path ' ' path_cii 
+cmd = [path_wb_c ' -cifti-convert -from-text ' cifti_txt_path ' ' path_cii ...
     ' ' result_dir filesep FNL_preproc_CIFTI_basename '.dtseries.nii'];
 
 system(cmd);
@@ -225,9 +225,9 @@ save(temp_mat,'Rr','-append');
 filename = [result_dir filesep motion_filename];
 
 is = 16;
-formatSpec = ['%' num2str(is) 's %' num2str(is) 's %' num2str(is) 's %' 
-    num2str(is) 's %' num2str(is) 's %' num2str(is) 's %' num2str(is) 
-    's %' num2str(is) 's %' num2str(is) 's %' num2str(is) 's %' 
+formatSpec = ['%' num2str(is) 's %' num2str(is) 's %' num2str(is) 's %' ...
+    num2str(is) 's %' num2str(is) 's %' num2str(is) 's %' num2str(is) ...
+    's %' num2str(is) 's %' num2str(is) 's %' num2str(is) 's %' ...
     num2str(is) 's\n'];
 fileID = fopen(filename,'w');
 fprintf(fileID, formatSpec,'#difference', 'diff_x', 'diff_y', ...
@@ -237,8 +237,8 @@ fprintf(fileID, formatSpec,'#difference', 'diff_x', 'diff_y', ...
 ix{min(r,c)-1} = [];
 dMR = diff(MR);
 num_fmt = '%16.6f';
-formatSpec = ['%' num2str(is) 's ' num_fmt ' ' num_fmt ' ' num_fmt ' ' 
-    num_fmt ' ' num_fmt ' ' num_fmt ' ' num_fmt ' ' num_fmt ' ' num_fmt 
+formatSpec = ['%' num2str(is) 's ' num_fmt ' ' num_fmt ' ' num_fmt ' ' ...
+    num_fmt ' ' num_fmt ' ' num_fmt ' ' num_fmt ' ' num_fmt ' ' num_fmt ...
     ' ' num_fmt '\n'];
 for i=2:min(r,c)
     ix{i-1} = [' ', num2str(i,'%04d') ' - ' num2str(i-1,'%04d') ' '];
