@@ -19,7 +19,7 @@ TR= conf_json.TR;
 fd_th= conf_json.fd_th;
 path_cii= conf_json.path_cii;
 path_ex_sum= conf_json.path_ex_sum;
-FNL_preproc_CIFTI_name= conf_json.FNL_preproc_CIFTI_name;
+FNL_preproc_CIFTI_basename= conf_json.FNL_preproc_CIFTI_basename;
 fMRIName= conf_json.fMRIName;
 file_wm= conf_json.file_wm;
 file_vent= conf_json.file_vent;
@@ -130,7 +130,7 @@ DVAR_post_reg = dvars_from_cifti(Rr);
 %% remake cifti for residuals from regressors
 cifti_resid_txt_path = [result_dir '/temp_FNL_cifti_resid.txt'];
 
-FNL_preproc_CIFTI_resid_name = strcat(FNL_preproc_CIFTI_resid_basename, ...
+FNL_preproc_CIFTI_resid_name = strcat(FNL_preproc_CIFTI_basename, ...
                                       '_resid.dtseries.nii');
 dlmwrite(cifti_resid_txt_path, Rr','delimiter' , ' ');
 
@@ -193,7 +193,7 @@ DVAR_post_all = dvars_from_cifti(Y);
 %% remake cifti
 dlmwrite(cifti_txt_path, Y','delimiter' ,' ');
 cmd = [path_wb_c ' -cifti-convert -from-text ' cifti_txt_path ' ' path_cii 
-    ' ' result_dir '/' FNL_preproc_CIFTI_name];
+    ' ' result_dir filesep FNL_preproc_CIFTI_basename '.dtseries.nii'];
 
 system(cmd);
 system(['rm -f ' cifti_txt_path]);
