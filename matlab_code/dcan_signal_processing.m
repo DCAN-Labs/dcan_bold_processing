@@ -45,7 +45,6 @@ cifti_txt_path = [result_dir filesep 'temp_FNL_cifti.txt'];
 cmd = [path_wb_c ' -cifti-convert -to-text ' path_cii ' ' cifti_txt_path];
 disp(cmd)
 system(cmd);
-system(['cp -f ' cifti_txt_path ' ~/' fMRIName '_temp_FNL_cifti_input.txt']);
 X = dlmread(cifti_txt_path);
 system(['rm -f ' cifti_txt_path]);
 DVAR_pre_reg=dvars_from_cifti(X);
@@ -134,7 +133,6 @@ cifti_resid_txt_path = [result_dir filesep 'temp_FNL_cifti_resid.txt'];
 FNL_preproc_CIFTI_resid_name = strcat(FNL_preproc_CIFTI_basename, ...
                                       '_resid.dtseries.nii');
 dlmwrite(cifti_resid_txt_path, Rr','delimiter' , ' ');
-system(['cp -f ' cifti_resid_txt_path ' ~/' fMRIName '_temp_FNL_cifti_resid.txt']);
 
 cmd = [path_wb_c ' -cifti-convert -from-text ' cifti_resid_txt_path ' ' ...
        path_cii ' ' result_dir filesep FNL_preproc_CIFTI_resid_name];
@@ -195,8 +193,6 @@ DVAR_post_all = dvars_from_cifti(Y);
 % Quick visualization of results
 %% remake cifti
 dlmwrite(cifti_txt_path, Y','delimiter' ,' ');
-system(['cp -f ' cifti_txt_path ' ~/' fMRIName '_temp_FNL_cifti.txt']);
-save(['~/' fMRIName '_workspace.mat'])
 
 cmd = [path_wb_c ' -cifti-convert -from-text ' cifti_txt_path ' ' path_cii ...
        ' ' result_dir filesep FNL_preproc_CIFTI_basename '.dtseries.nii'];
