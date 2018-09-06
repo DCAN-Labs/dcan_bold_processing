@@ -41,5 +41,5 @@ mv filtered_movement_regressors dcan_signal_processsing analyses_v2 run_*.sh ${B
 
 #add MCR_CACHE_ROOT to all run scripts for Exahead processing
 sed -i '/exe_dir=`dirname "$0"`/a if [ ! -d $TMPDIR/$USER ]; then\n    mkdir $TMPDIR/$USER\nfi\n' ${BIN}/run_*.sh
-sed -i '/  shift 1/a   TASK="$1"\n  export MCR_CACHE_ROOT=$TMPDIR/$USER/$TASK\n  mkdir $MCR_CACHE_ROOT\n  shift 1' ${BIN}/run_*.sh
+sed -i '/  shift 1/a \  TASK="$1"\n  RANDHASH=`cat /dev/urandom | tr -cd "a-f0-9" | head -c 8`\n  export MCR_CACHE_ROOT=$TMPDIR/$USER/$RANDHASH/$TASK\n  mkdir -p $MCR_CACHE_ROOT\n  shift 1' ${BIN}/run_*.sh
 

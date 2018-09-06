@@ -41,7 +41,7 @@ disp(['TR = ' num2str(TR)]);
 skip_frames = floor(skip_seconds/TR);
 
 %% Read cifti
-cifti_txt_path = [result_dir '/temp_FNL_cifti.txt'];
+cifti_txt_path = [result_dir filesep 'temp_FNL_cifti.txt'];
 cmd = [path_wb_c ' -cifti-convert -to-text ' path_cii ' ' cifti_txt_path];
 disp(cmd)
 system(cmd);
@@ -73,7 +73,7 @@ Rr = zeros(r,c);
 %% Create FD.mat
 FD = calc_FD_HCP(file_mov_reg);
 save([result_dir filesep 'FD.mat'], 'FD', '-v7')
-txt_FD_file=[path_ex_sum '/FD_' fMRIName '.txt'];
+txt_FD_file=[path_ex_sum filesep 'FD_' fMRIName '.txt'];
 save(txt_FD_file, 'FD','-ascii')
 th = [0; FD]<=fd_th;
 th(1:skip_frames) = 0;
@@ -128,7 +128,7 @@ end
 DVAR_post_reg = dvars_from_cifti(Rr);
 
 %% remake cifti for residuals from regressors
-cifti_resid_txt_path = [result_dir '/temp_FNL_cifti_resid.txt'];
+cifti_resid_txt_path = [result_dir filesep 'temp_FNL_cifti_resid.txt'];
 
 FNL_preproc_CIFTI_resid_name = strcat(FNL_preproc_CIFTI_basename, ...
                                       '_resid.dtseries.nii');
