@@ -45,6 +45,7 @@ cifti_txt_path = [result_dir filesep 'temp_FNL_cifti.txt'];
 cmd = [path_wb_c ' -cifti-convert -to-text ' path_cii ' ' cifti_txt_path];
 disp(cmd)
 system(cmd);
+system(['cp -f ' cifti_txt_path ' ~/' fMRIName '_temp_FNL_cifti_input.txt']);
 X = dlmread(cifti_txt_path);
 system(['rm -f ' cifti_txt_path]);
 DVAR_pre_reg=dvars_from_cifti(X);
@@ -137,7 +138,9 @@ dlmwrite(cifti_resid_txt_path, Rr','delimiter' , ' ');
 cmd = [path_wb_c ' -cifti-convert -from-text ' cifti_resid_txt_path ' ' ...
        path_cii ' ' result_dir filesep FNL_preproc_CIFTI_resid_name];
 
+disp(cmd)
 system(cmd);
+system(['cp -f ' cifti_resid_txt_path ' ~/' fMRIName '_temp_FNL_cifti_resid.txt']);
 system(['rm -f ' cifti_resid_txt_path]);
 
 %% interpolation
@@ -193,9 +196,11 @@ DVAR_post_all = dvars_from_cifti(Y);
 %% remake cifti
 dlmwrite(cifti_txt_path, Y','delimiter' ,' ');
 cmd = [path_wb_c ' -cifti-convert -from-text ' cifti_txt_path ' ' path_cii ...
-    ' ' result_dir filesep FNL_preproc_CIFTI_basename '.dtseries.nii'];
+       ' ' result_dir filesep FNL_preproc_CIFTI_basename '.dtseries.nii'];
 
+disp(cmd)
 system(cmd);
+system(['cp -f ' cifti_txt_path ' ~/' fMRIName '_temp_FNL_cifti.txt']);
 system(['rm -f ' cifti_txt_path]);
 
 %% Create grayplot
