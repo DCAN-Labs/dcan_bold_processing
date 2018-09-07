@@ -247,22 +247,53 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         # create white matter and ventricle masks for regression
         make_masks(input_spec['segmentation'], output_spec['wm_mask'],
                    output_spec['vent_mask'])
+
     elif teardown:
+        concat_and_parcellate(concatlist)
         # setup inputs, then run analyses_v2
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
-        analyses_v2_config = {
+        for tasklist in concatlist:
+            if len(tasklist) != 0:
+                taskset = task[0][:-2]
+            analysis_folder = os.path.join(output_folder, version_name,
+                                           'analyses_v2')
+            if not os.path.exists(analysis_folder):
+                os.makedirs(analysis_folder)
+            for subfolder in ['FCmaps','motion','timecourses','matlab_code',
+                              'workbench']:
+                folder = os.path.join(analysis_folder,subfolder)
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+
+                analyses_v2_config = {
                     'path_wb_c': '%s/wb_command' % os.environ['CARET7DIR'],
                     'epi_TR': repitition_time,
                     'summary_Dir': output_spec['summary_folder'],
                     'brain_radius_in_mm': brain_radius,
                     'expected_contiguous_frame_count': contiguous_frames,
-                    'result_dir': output_spec['result_dir'],
-                    'path_motion_numbers': output_spec['output_motion_numbers'],
+                    'result_dir': os.path.join(analysis_folder,'matlab_code'),
+                    'path_motion_numbers': os.path.join(output_folder,
+                                                        'MNINonLinear',
+                                                        'Results', taskset + '*',
+                                                        version_name,
+                                                        'motion_numbers.txt'),
                     'path_ciftis': output_spec['output_ciftis'],
                     'path_timecourses': output_spec['output_timecourses'],
                     'skip_seconds': skip_seconds
                 }
-        concat_and_parcellate()
+
+            analyses_v2_json_path = os.path.join(analysis_folder, matlab_code,
+                                                 taskset + '_analyses_v2_mat_config.json')
+
+            # write input json for matlab script
+            with open(analyses_v2_json_path, 'w') as fd:
+                json.dump(analyses_v2_config, fd, sort_keys=True, indent=4)
+
+            executable = os.path.join(here, 'bin', 'run_analyses_v2.sh')
+            cmd = [executable, os.environ['MCRROOT'], analyses_v2_json_path]
+            subprocess.call(cmd)
+
+    # This is the case that loops over tasks
     else:
         assert os.path.exists(output_spec['vent_mask']), \
             'must run this script with --setup flag prior to running ' \
@@ -295,9 +326,9 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 here, 'bin', 'run_filtered_movement_regressors.sh')
             cmd = [executable, os.environ['MCRROOT'], task,
                    input_spec['movement_regressors'], str(repetition_time),
-                   str(motion_filter_option), str(motion_filter_order), str(band_stop_min),
-                   motion_filter_type, str(band_stop_min), str(band_stop_max),
-                   filtered_movement_regressors]
+                   str(motion_filter_option), str(motion_filter_order),
+                   str(band_stop_min), motion_filter_type, str(band_stop_min),
+                   str(band_stop_max), filtered_movement_regressors]
 
             subprocess.call(cmd)
             # update input movement regressors
@@ -331,13 +362,24 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         }
         # write input json for matlab script
         with open(output_spec['config'], 'w') as fd:
-            json.dump(matlab_input, fd)
+            json.dump(matlab_input, fd, sort_keys=True, indent=4)
 
         print('running %s matlab on %s' % (version_name, task))
         executable = os.path.join(here, 'bin', 'run_dcan_signal_processsing.sh')
         cmd = [executable, os.environ['MCRROOT'], task, output_spec['config']]
         subprocess.call(cmd)
 
+        # grab # of lines in movement regressors file for frame count file
+        with open(input_spec['movement_regressors'],'r') as f:
+            for i, l in enumerate(f):
+                pass
+            frame_count = i + 1
+
+        frames_file = os.path.join(output_spec['summary_folder'],
+                                   'frames_per_scan.txt')
+
+        with open(frames_file,'w') as f:
+            f.write('%d' % frame_count)
 
 def get_repetition_time(fmri):
     """
@@ -424,8 +466,29 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
         os.remove(tempfiles[key])
 
 
-def concat_and_parcellate(task_basenames, **kwargs):
-    pass
+def concat_and_parcellate(**kwargs):
+    # Concatenation
+    for tasklist in concatlist:
+        for i,task in enumerate(tasklist):
+            taskset = task[:-2]
+            output_results = os.path.join(output_folder, 'MNINonLinear',
+                                          'Results')
+            input_task_dtseries = os.path.join(output_results, task, version_name,
+                                               '%s_%s_Atlas.dtseries.nii' %
+                                                  (task,version_name))
+            output_concat_dtseries = os.path.join(output_results,
+                                                  '%s_%s_Atlas.dtseries.nii' %
+                                                  (taskset,version_name))
+            print("Concatenating %s to %s" % (task, output_concat_dtseries))
+            if i == 0:
+                if os.path.exists(output_concat_dtseries):
+                    os.remove(output_concat_dtseries)
+                shutil.copy(input_task_dtseries,output_concat_dtseries)
+            else:
+                cmd = ['%s/wb_command' % os.environ['CARET7DIR'],'-cifti-merge',
+                       output_concat_dtseries,'-cifti',output_concat_dtseries,
+                       '-cifti',input_task_dtseries]
+                subprocess.call(cmd)
 
 
 if __name__ == '__main__':

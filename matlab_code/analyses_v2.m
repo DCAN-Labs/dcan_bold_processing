@@ -24,17 +24,17 @@ function analyses_v2(config_path)
     %% Make cat figure (Added by Oscar on Dec 10, 2015)
 
     % @ WARNING This is a hard coded expected file path...
-    temp_files = sort_RS([summary_Dir filesep 'temp_grayplotdata_' 
-        taskname '*.mat']);
+    temp_files = sorter([summary_Dir filesep 'temp_grayplotdata_' 
+        taskname '*.mat'],taskname);
     cat_FD = [];
     cat_DVAR_pre_reg = [];
     cat_DVAR_post_reg = [];
     cat_DVAR_post_all = [];
     cat_Xd = [];
     cat_Rr = [];
-    n_rests = length(temp_files);
+    n_tasks = length(temp_files);
 
-    for i=1:n_rests
+    for i=1:n_tasks
         local_file = temp_files{i};
         load(local_file);
         cat_FD = [cat_FD; nan_FD];
@@ -45,11 +45,11 @@ function analyses_v2(config_path)
         cat_Rr = [cat_Rr; Rr];
         delete(local_file);
     end
-    tit = [num2str(n_rests) ' runs'];
+    tit = [num2str(n_tasks) ' runs'];
 
     try
         disp('Starting fig_fMRI_QA')
-        fig_fMRI_QA('CONCA', cat_FD, cat_Xd, cat_DVAR_pre_reg, ...
+        fig_fMRI_QA(['CONCA_' taskname], cat_FD, cat_Xd, cat_DVAR_pre_reg, ...
             cat_DVAR_post_reg, cat_DVAR_post_all,summary_Dir);
     catch ERROR
         disp(ERROR.message)
@@ -59,11 +59,11 @@ function analyses_v2(config_path)
     end
     try
         disp('Starting fig_fMRI_QA_Postreg')
-        fig_fMRI_QA('CONCP', cat_FD, cat_Rr, cat_DVAR_pre_reg, ...
+        fig_fMRI_QA(['CONCP_' taskname], cat_FD, cat_Rr, cat_DVAR_pre_reg, ...
             cat_DVAR_post_reg, cat_DVAR_post_all,summary_Dir);
     catch ERROR
         disp(ERROR.message)
-        disp(['there was an error creating the concatenated post reg '
+        disp(['there was an error creating the concatenated post reg ' ...
             'grayplots figure.'])
         %exit
     end   
@@ -80,7 +80,7 @@ function analyses_v2(config_path)
     disp('get the paths to motion numbers')
     try
         disp(path_motion_numbers)
-        FD_movement_files = sort_RS(path_motion_numbers);
+        FD_movement_files = sorter(path_motion_numbers,taskname);
     catch ME
         disp(ME.message)
         disp(['ERROR: Check the existence of a good Movement_Regressors.txt file.  No motion_numbers.txt file here: ' fullfile(path_motion_numbers)])
