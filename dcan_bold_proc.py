@@ -35,7 +35,8 @@ def _cli():
         'skip_seconds': args.skip_seconds,
         'brain_radius': args.brain_radius,
         'setup': args.setup,
-        'teardown': args.teardown
+        'teardown': args.teardown,
+        'tasklist': args.tasklist
     }
 
     return interface(**kwargs)
@@ -134,6 +135,13 @@ def generate_parser(parser=None):
                         help='after tasks have completed, concatenate resting '
                              'state data and parcellate.'
                         )
+    parser.add_argument('--tasklist', action='append',
+                        help='comma separated tasks to be concatenated, pass '
+                             'in argument multiple times to add more task '
+                             'lists.  Also determines which tasks will be '
+                             'parcellated, so a single task may be input to '
+                             'parcellate it.'
+                        )
     parser.add_argument('--brain-radius', type=int,
                         help='radius of brain for computation of framewise '
                              'displacement')
@@ -146,7 +154,8 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
               motion_filter_type=None, motion_filter_option=None,
               motion_filter_order=None, band_stop_min=None,
               band_stop_max=None, skip_seconds=None, brain_radius=None,
-              contiguous_frames=None, setup=False, teardown=None, **kwargs):
+              contiguous_frames=None, setup=False, teardown=None,
+              tasklist=None, **kwargs):
     """
     main function with 3 modes:
         setup, task, and teardown.
