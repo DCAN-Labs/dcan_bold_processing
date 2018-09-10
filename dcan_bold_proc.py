@@ -283,17 +283,15 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                     'brain_radius_in_mm': brain_radius,
                     'expected_contiguous_frame_count': contiguous_frames,
                     'result_dir': os.path.join(analysis_folder,'matlab_code'),
-                    'path_motion_numbers': os.path.join(output_folder,
-                                                        'MNINonLinear',
-                                                        'Results', taskname + '*',
-                                                        version_name,
-                                                        'motion_numbers.txt'),
+                    'path_motion_numbers': os.path.join(
+                        output_folder, 'MNINonLinear', 'Results',
+                        taskname + '*', version_name, 'motion_numbers.txt'),
                     'path_ciftis': output_spec['output_ciftis'],
                     'path_timecourses': output_spec['output_timecourses'],
                     'skip_seconds': skip_seconds
                 }
 
-            analyses_v2_json_path = os.path.join(analysis_folder, matlab_code,
+            analyses_v2_json_path = os.path.join(analysis_folder, 'matlab_code',
                                                  taskname + '_analyses_v2_mat_config.json')
 
             # write input json for matlab script
