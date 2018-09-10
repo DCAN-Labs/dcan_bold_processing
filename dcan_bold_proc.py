@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+__prog__ = 'DCANBOLDProc'
+__version__ = '4.0.0'
+
 import argparse
 import json
 import os
@@ -7,7 +10,6 @@ import subprocess
 import shutil
 
 here = os.path.dirname(os.path.realpath(__file__))
-version = '4.0.0'
 
 
 def _cli():
@@ -64,8 +66,8 @@ def generate_parser(parser=None):
             hdf5 (.mat) format file.
 
             [teardown]: concatenates any resting state runs into a single
-            dtseries.
-            """ % version,
+            dtseries, and parcellates all final tasks.
+            """ % __version__,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
     parser.add_argument('--subject', required=True,
@@ -196,7 +198,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
     :return:
     """
     # name should only reflect release version, not filter usage.
-    version_name = 'DCANBOLDProc_v%s' % version
+    version_name = '%s_v%s' % (__prog__, __version__)
 
     # standard input and output folder locations.
     input_spec = {
@@ -259,7 +261,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                    output_spec['vent_mask'])
 
     elif teardown:
-        concat_and_parcellate(tasklist, output_folder)
+        concat_and_parcellate()
         # setup inputs, then run analyses_v2
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
         for task_set in tasklist:
@@ -397,7 +399,7 @@ def get_repetition_time(fmri):
     """
     cmd = 'fslval {task} pixdim4'.format(task=fmri)
     popen = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-    stdout, stderr = popen.communicate()
+    stdout,stderr = popen.communicate()
     repetition_time = float(stdout)
     return repetition_time
 
@@ -471,33 +473,70 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
         cmd = cmdfmt.format(**kwargs)
         subprocess.call(cmd.split())
     # cleanup
-    for key in tempfiles.keys():
-        os.remove(tempfiles[key])
+    for filename in tempfiles.values():
+        os.remove(tempfiles[filename])
 
 
-def concat_and_parcellate(**kwargs):
-    # Concatenation
+def concat_and_parcellate(concatlist, output_folder):
+    version_name = '%s_v%s' % (__prog__, __version__)
+
+    parcellation_folder = os.path.join(here, 'templates', 'parcellations')
+    parcellations = get_parcels(parcellation_folder)
+
+    # concatenation
     for tasklist in concatlist:
         for i,task in enumerate(tasklist):
-            taskset = task[:-2]
-            output_results = os.path.join(output_folder, 'MNINonLinear',
+            taskname = task[:-2]
+            base_results_folder = os.path.join(output_folder, 'MNINonLinear',
                                           'Results')
-            input_task_dtseries = os.path.join(output_results, task, version_name,
+            input_task_dtseries = os.path.join(base_results_folder, task,
+                                               version_name,
                                                '%s_%s_Atlas.dtseries.nii' %
-                                                  (task,version_name))
-            output_concat_dtseries = os.path.join(output_results,
+                                               (task, version_name))
+            output_concat_dtseries = os.path.join(base_results_folder,
                                                   '%s_%s_Atlas.dtseries.nii' %
-                                                  (taskset,version_name))
+                                                  (taskname, version_name))
             print("Concatenating %s to %s" % (task, output_concat_dtseries))
             if i == 0:
                 if os.path.exists(output_concat_dtseries):
                     os.remove(output_concat_dtseries)
-                shutil.copy(input_task_dtseries,output_concat_dtseries)
+                shutil.copy(input_task_dtseries, output_concat_dtseries)
             else:
-                cmd = ['%s/wb_command' % os.environ['CARET7DIR'],'-cifti-merge',
-                       output_concat_dtseries,'-cifti',output_concat_dtseries,
-                       '-cifti',input_task_dtseries]
+                cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
+                       '-cifti-merge', output_concat_dtseries, '-cifti',
+                       output_concat_dtseries, '-cifti',
+                       input_task_dtseries]
                 subprocess.call(cmd)
+
+            # parcellation
+            for parcel_name, filename in parcellations:
+                output_subcorticals = os.path.join(
+                    base_results_folder,
+                    '%s_%s_%s_subcorticals.ptseries.nii' %
+                    (taskname, version_name, parcel_name)
+                )
+                output_parcellation = os.path.join(
+                    base_results_folder,
+                    '%s_%s_%s.ptseries.nii' %
+                    (taskname, version_name, parcel_name)
+                )
+                parcels = os.path.join(
+                    parcellation_folder, parcel_name, 'fsLR',
+                    '%s.32k_fs_LR.dlabel.nii' % parcel_name
+                )
+                subcorticals = os.path.join(
+                    parcellation_folder, parcel_name, 'fsLR',
+                    '%s.subcortical.32k_fs_LR.dlabel.nii' % parcel_name
+                )
+                for parc in [output_parcellation, output_subcorticals]:
+                    cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
+                           '-cifti-parcellate', output_concat_dtseries,
+                           'COLUMN', parc]
+                    subprocess.call(cmd)
+
+
+def get_parcels(parcellation_folder):
+    pass
 
 
 if __name__ == '__main__':
