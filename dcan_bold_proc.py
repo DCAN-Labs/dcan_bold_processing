@@ -136,7 +136,7 @@ def generate_parser(parser=None):
                              'state data and parcellate.'
                         )
     parser.add_argument('--tasklist', action='append',
-                        help='comma separated tasks to be concatenated, pass '
+                        help='comma delimited tasks to be concatenated, pass '
                              'in argument multiple times to add more task '
                              'lists.  Also determines which tasks will be '
                              'parcellated, so a single task may be input to '
@@ -144,7 +144,8 @@ def generate_parser(parser=None):
                         )
     parser.add_argument('--brain-radius', type=int,
                         help='radius of brain for computation of framewise '
-                             'displacement')
+                             'displacement'
+                        )
 
     return parser
 
@@ -258,12 +259,13 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                    output_spec['vent_mask'])
 
     elif teardown:
-        concat_and_parcellate(concatlist)
+        concat_and_parcellate()
         # setup inputs, then run analyses_v2
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
-        for tasklist in concatlist:
-            if len(tasklist) != 0:
-                taskset = task[0][:-2]
+        for task_set in tasklist:
+            task_set = task_set.split(',')
+            if len(task_set) != 0:
+                taskname = task_set[0][:-2]
             analysis_folder = os.path.join(output_folder, version_name,
                                            'analyses_v2')
             if not os.path.exists(analysis_folder):
@@ -276,14 +278,14 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
                 analyses_v2_config = {
                     'path_wb_c': '%s/wb_command' % os.environ['CARET7DIR'],
-                    'epi_TR': repitition_time,
+                    'epi_TR': repetition_time,
                     'summary_Dir': output_spec['summary_folder'],
                     'brain_radius_in_mm': brain_radius,
                     'expected_contiguous_frame_count': contiguous_frames,
                     'result_dir': os.path.join(analysis_folder,'matlab_code'),
                     'path_motion_numbers': os.path.join(output_folder,
                                                         'MNINonLinear',
-                                                        'Results', taskset + '*',
+                                                        'Results', taskname + '*',
                                                         version_name,
                                                         'motion_numbers.txt'),
                     'path_ciftis': output_spec['output_ciftis'],
@@ -292,7 +294,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 }
 
             analyses_v2_json_path = os.path.join(analysis_folder, matlab_code,
-                                                 taskset + '_analyses_v2_mat_config.json')
+                                                 taskname + '_analyses_v2_mat_config.json')
 
             # write input json for matlab script
             with open(analyses_v2_json_path, 'w') as fd:
