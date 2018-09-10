@@ -259,7 +259,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                    output_spec['vent_mask'])
 
     elif teardown:
-        concat_and_parcellate()
+        concat_and_parcellate(tasklist, output_folder)
         # setup inputs, then run analyses_v2
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
         for task_set in tasklist:
@@ -399,7 +399,7 @@ def get_repetition_time(fmri):
     """
     cmd = 'fslval {task} pixdim4'.format(task=fmri)
     popen = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-    stdout,stderr = popen.communicate()
+    stdout, stderr = popen.communicate()
     repetition_time = float(stdout)
     return repetition_time
 
