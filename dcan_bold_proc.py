@@ -483,8 +483,8 @@ def concat_and_parcellate(concatlist, output_folder):
     parcellation_folder = os.path.join(here, 'templates', 'parcellations')
     parcellations = get_parcels(parcellation_folder)
 
-    # concatenation
     for tasklist in concatlist:
+        # concatenation
         for i,task in enumerate(tasklist):
             taskname = task[:-2]
             base_results_folder = os.path.join(output_folder, 'MNINonLinear',
@@ -508,37 +508,35 @@ def concat_and_parcellate(concatlist, output_folder):
                        input_task_dtseries]
                 subprocess.call(cmd)
 
-            # parcellation
-            for parcel_name, score in parcellations:
-                output_subcorticals = os.path.join(
-                    base_results_folder,
-                    '%s_%s_%s_subcorticals.ptseries.nii' %
-                    (taskname, version_name, parcel_name)
-                )
-                output_parcellation = os.path.join(
-                    base_results_folder,
-                    '%s_%s_%s.ptseries.nii' %
-                    (taskname, version_name, parcel_name)
-                )
-                parcels = os.path.join(
-                    parcellation_folder, parcel_name, 'fsLR',
-                    '%s.32k_fs_LR.dlabel.nii' % parcel_name
-                )
-                subcorticals = os.path.join(
-                    parcellation_folder, parcel_name, 'fsLR',
-                    '%s.subcortical.32k_fs_LR.dlabel.nii' % parcel_name
-                )
-                # score of 1 is cortical, 2 is subcortical, and 3 is both
-                if score in (1, 3):
-                    cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
-                           '-cifti-parcellate', output_concat_dtseries,
-                           parcels, 'COLUMN', output_parcellation]
-                    subprocess.call(cmd)
-                if score in (2, 3):
-                    cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
-                            '-cifti-parcellate', output_concat_dtseries,
-                            subcorticals, 'COLUMN', output_subcorticals]
-                    subprocess.call(cmd)
+        # parcellation
+        for parcel_name, score in parcellations:
+            output_subcorticals = os.path.join(
+                base_results_folder, '%s_%s_%s_subcorticals.ptseries.nii' %
+                (taskname, version_name, parcel_name)
+            )
+            output_parcellation = os.path.join(
+                base_results_folder, '%s_%s_%s.ptseries.nii' %
+                (taskname, version_name, parcel_name)
+            )
+            parcels = os.path.join(
+                parcellation_folder, parcel_name, 'fsLR',
+                '%s.32k_fs_LR.dlabel.nii' % parcel_name
+            )
+            subcorticals = os.path.join(
+                parcellation_folder, parcel_name, 'fsLR',
+                '%s.subcortical.32k_fs_LR.dlabel.nii' % parcel_name
+            )
+            # score of 1 is cortical, 2 is subcortical, and 3 is both
+            if score in (1, 3):
+                cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
+                       '-cifti-parcellate', output_concat_dtseries,
+                       parcels, 'COLUMN', output_parcellation]
+                subprocess.call(cmd)
+            if score in (2, 3):
+                cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
+                        '-cifti-parcellate', output_concat_dtseries,
+                        subcorticals, 'COLUMN', output_subcorticals]
+                subprocess.call(cmd)
 
 
 def get_parcels(parcellation_folder, space='fsLR'):
