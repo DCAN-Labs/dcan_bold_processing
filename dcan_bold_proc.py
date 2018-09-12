@@ -535,8 +535,31 @@ def concat_and_parcellate(concatlist, output_folder):
                     subprocess.call(cmd)
 
 
-def get_parcels(parcellation_folder):
-    pass
+def get_parcels(parcellation_folder, space='fsLR'):
+    """
+    gets the valid labels out of the parcellation folder.
+    :param parcellation_folder: base directory for parcellations
+    :param space: name of the space for the parcellations
+    :return: list of 2-tuples, first element is the name of the label, the
+    second element is a score:
+    1: only a cortical dlabel exists.
+    2: only a subcortical dlabel exists.
+    3: both cortical and subcortical dlabel files exist.
+    """
+    walker = list(os.walk(parcellation_folder))
+    # find all folders which contain a space subdirectory
+    candidates = [x for x in walker if space == os.path.basename(x[0])]
+    # check that the proper dlabel files can be found.
+    parcel_names = []
+    for x in candidates:
+        label_name = os.path.basename(os.path.dirname(x[0]))
+        score = '%s.32k_fs_LR.dlabel.nii' % label_name in x[1] + \
+            2 * ('%s.subcortical.32k_fs_LR.dlabel.nii' % label_name in x[1])
+        if score:
+            parcel_names.append((label_name, score))
+        else:
+            print('%s is a bad label file directory' % label_name)
+    return parcel_names
 
 
 if __name__ == '__main__':
