@@ -261,7 +261,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                    output_spec['vent_mask'])
 
     elif teardown:
-        concat_and_parcellate()
+        concat_and_parcellate(tasklist, output_folder)
         # setup inputs, then run analyses_v2
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
         for task_set in tasklist:
@@ -509,7 +509,7 @@ def concat_and_parcellate(concatlist, output_folder):
                 subprocess.call(cmd)
 
             # parcellation
-            for parcel_name, filename in parcellations:
+            for parcel_name, score in parcellations:
                 output_subcorticals = os.path.join(
                     base_results_folder,
                     '%s_%s_%s_subcorticals.ptseries.nii' %
@@ -528,10 +528,16 @@ def concat_and_parcellate(concatlist, output_folder):
                     parcellation_folder, parcel_name, 'fsLR',
                     '%s.subcortical.32k_fs_LR.dlabel.nii' % parcel_name
                 )
-                for parc in [output_parcellation, output_subcorticals]:
+                # score of 1 is cortical, 2 is subcortical, and 3 is both
+                if score in (1, 3):
                     cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
                            '-cifti-parcellate', output_concat_dtseries,
-                           'COLUMN', parc]
+                           parcels, 'COLUMN', output_parcellation]
+                    subprocess.call(cmd)
+                if score in (2, 3):
+                    cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
+                            '-cifti-parcellate', output_concat_dtseries,
+                            subcorticals, 'COLUMN', output_subcorticals]
                     subprocess.call(cmd)
 
 
