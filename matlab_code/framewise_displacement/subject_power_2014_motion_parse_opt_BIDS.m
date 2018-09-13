@@ -1,4 +1,4 @@
-function subject_power_2014_motion_parse_v2_opt(movement_files,skip_seconds,epi_TR,expected_contiguous_frame_count,output_dir)
+function subject_power_2014_motion_parse_opt_BIDS(movement_files,skip_seconds,epi_TR,expected_contiguous_frame_count,output_dir,output_prefix)
 % FD parsing Nipype wrapper pulling in list of motion files
 % Modified to read DVAR_pre_reg, DVAR_post_reg, and DVAR_post_all and store
 % values appropriately in the 51x51x3 cell array of structs
@@ -92,9 +92,5 @@ for i = 1:N_FD
         end
     end
 end
-%this_path=pwd;
 
-save([output_dir '/power_2014_motion.mat'],'motion_data');
-%% This thing was for testing
-% mot_omd=motion_data;
-% save('power_2014_motion.mat','mot_omd');
+save([output_dir filesep output_prefix '_power_2014_motion.mat'],'motion_data');

@@ -1,4 +1,4 @@
-function subject_FD_parse_v2(FD_movement_files,skip_seconds,epi_TR,brain_radius_in_mm,result_dir)
+function subject_FD_parse_BIDS(FD_movement_files,skip_seconds,epi_TR,brain_radius_in_mm,result_dir,output_prefix)
 % Code from OHSU Fair Neuroimaging Lab
 % Written (2014) and commented (9/8/2015) by Eric Earl
 % 
@@ -75,4 +75,4 @@ end
 % present working directory
 % this_path=pwd;
 %save([this_path filesep 'FD.mat'],'FD_data');
-save([result_dir filesep 'FD.mat'],'FD_data');
+save([result_dir filesep output_prefix '_FD.mat'],'FD_data');

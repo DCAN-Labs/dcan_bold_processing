@@ -207,6 +207,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         'movement_regressors': os.path.join(output_folder, 'MNINonLinear',
                                             'Results', task,
                                             'Movement_Regressors.txt'),
+        'output_dtseries_basename': '%s_%s_Atlas' % (task, version_name),
         'segmentation': os.path.join(output_folder, 'MNINonLinear', 'ROIs',
                                      'wmparc.2.nii.gz')
     }
@@ -217,7 +218,6 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                                '%s_mat_config.json' % version_name),
         'output_ciftis': os.path.join(output_folder, version_name,
                                       'analyses_v2','workbench'),
-        'output_dtseries_basename': '%s_%s_Atlas' % (task, version_name),
         'output_motion_numbers': os.path.join(output_folder, 'MNINonLinear',
                                               'Results', task, version_name,
                                               'motion_numbers.txt'),
@@ -243,6 +243,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         print('removing old %s outputs' % version_name)
         # delete existing fnlpp results
         for value in output_spec.values():
+            print(value)
             if task in value:
                 continue
             elif os.path.exists(value):
@@ -259,13 +260,28 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                    output_spec['vent_mask'])
 
     elif teardown:
-        concat_and_parcellate()
+        output_results = os.path.join(output_folder, 'MNINonLinear', 'Results')
+        alltasks = os.listdir(output_results)
+        tasknames = sorted(list(set([d[:-2] for d in alltasks 
+                                     if os.path.isdir(os.path.join(output_results,d)) 
+                                     and 'task-' in d])))
+
+        concatlist = []
+        for bids_task in tasknames:
+            concatlist.append(sorted([ d for d in os.listdir(output_results)
+                                       if os.path.isdir(os.path.join(output_results,d))
+                                       and bids_task in d ]))
+
+        concatenate(output_folder,concatlist,version_name) # This function can probably be moved down after testing
+
         # setup inputs, then run analyses_v2
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
         for task_set in tasklist:
-            task_set = task_set.split(',')
-            if len(task_set) != 0:
-                taskname = task_set[0][:-2]
+            if len(tasklist) > 0:
+                taskset = tasklist[0][:-2]
+
+            print('Running analyses_v2 on %s' % taskset)
+
             analysis_folder = os.path.join(output_folder, version_name,
                                            'analyses_v2')
             if not os.path.exists(analysis_folder):
@@ -276,24 +292,26 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 if not os.path.exists(folder):
                     os.makedirs(folder)
 
-                analyses_v2_config = {
-                    'path_wb_c': '%s/wb_command' % os.environ['CARET7DIR'],
-                    'epi_TR': repetition_time,
-                    'summary_Dir': output_spec['summary_folder'],
-                    'brain_radius_in_mm': brain_radius,
-                    'expected_contiguous_frame_count': contiguous_frames,
-                    'result_dir': os.path.join(analysis_folder,'matlab_code'),
-                    'path_motion_numbers': os.path.join(output_folder,
-                                                        'MNINonLinear',
-                                                        'Results', taskname + '*',
-                                                        version_name,
-                                                        'motion_numbers.txt'),
-                    'path_ciftis': output_spec['output_ciftis'],
-                    'path_timecourses': output_spec['output_timecourses'],
-                    'skip_seconds': skip_seconds
-                }
+            analyses_v2_config = {
+                'path_wb_c': '%s/wb_command' % os.environ['CARET7DIR'],
+                'taskname': taskset,
+                'version': version_name,
+                'epi_TR': repetition_time,
+                'summary_Dir': output_spec['summary_folder'],
+                'brain_radius_in_mm': brain_radius,
+                'expected_contiguous_frame_count': contiguous_frames,
+                'result_dir': os.path.join(analysis_folder,'motion'),
+                'path_motion_numbers': os.path.join(output_folder,
+                                                    'MNINonLinear',
+                                                    'Results', taskset + '*',
+                                                    version_name,
+                                                    'motion_numbers.txt'),
+                'path_ciftis': output_spec['output_ciftis'],
+                'path_timecourses': output_spec['output_timecourses'],
+                'skip_seconds': skip_seconds,
+            }
 
-            analyses_v2_json_path = os.path.join(analysis_folder, matlab_code,
+            analyses_v2_json_path = os.path.join(analysis_folder, 'matlab_code',
                                                  taskname + '_analyses_v2_mat_config.json')
 
             # write input json for matlab script
@@ -313,6 +331,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
         # delete existing results
         for value in output_spec.values():
+            print(value)
             if task in value and os.path.exists(value):
                 if os.path.isfile(value) or os.path.islink(value):
                     os.remove(value)
@@ -335,7 +354,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 )
             executable = os.path.join(
                 here, 'bin', 'run_filtered_movement_regressors.sh')
-            cmd = [executable, os.environ['MCRROOT'], task,
+            cmd = [executable, os.environ['MCRROOT'],
                    input_spec['movement_regressors'], str(repetition_time),
                    str(motion_filter_option), str(motion_filter_order),
                    str(band_stop_min), motion_filter_type, str(band_stop_min),
@@ -361,7 +380,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             'fd_th': fd_threshold,
             'path_cii': input_spec['dtseries'],
             'path_ex_sum': output_spec['summary_folder'],
-            'FNL_preproc_CIFTI_basename': output_spec['output_dtseries_basename'],
+            'FNL_preproc_CIFTI_basename': input_spec['output_dtseries_basename'],
             'fMRIName': task,
             'file_wm': output_spec['wm_mean_signal'],
             'file_vent': output_spec['vent_mean_signal'],
@@ -377,7 +396,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
         print('running %s matlab on %s' % (version_name, task))
         executable = os.path.join(here, 'bin', 'run_dcan_signal_processsing.sh')
-        cmd = [executable, os.environ['MCRROOT'], task, output_spec['config']]
+        cmd = [executable, os.environ['MCRROOT'], output_spec['config']]
         subprocess.call(cmd)
 
         # grab # of lines in movement regressors file for frame count file
@@ -387,7 +406,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             frame_count = i + 1
 
         frames_file = os.path.join(output_spec['summary_folder'],
-                                   'frames_per_scan.txt')
+                                   task + '_frames_per_scan.txt')
 
         with open(frames_file,'w') as f:
             f.write('%d' % frame_count)
@@ -477,9 +496,11 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
         os.remove(tempfiles[key])
 
 
-def concat_and_parcellate(**kwargs):
+def concatenate(output_folder, concatlist, version_name, **kwargs):
+    print('Running concatenation')
     # Concatenation
     for tasklist in concatlist:
+        print(tasklist)
         for i,task in enumerate(tasklist):
             taskset = task[:-2]
             output_results = os.path.join(output_folder, 'MNINonLinear',

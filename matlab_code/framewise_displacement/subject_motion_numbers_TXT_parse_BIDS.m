@@ -1,5 +1,5 @@
 %% Written by Eric Earl, 10/15/2014
-function subject_motion_numbers_TXT_parse_v2(movement_files, output_dir)
+function subject_motion_numbers_TXT_parse_BIDS(movement_files, output_dir, output_prefix)
 % Motion numbers parsing Nipype wrapper pulling in list of motion files
 % Outputs motion_numbers to "motion_numbers.mat" file
 % movement_files = {'motion_numbers0.txt', 'motion_numbers1.txt', 'motion_numbers2.txt'};
@@ -62,5 +62,5 @@ end
 %%
 %this_path=pwd;
 disp('Running motion_numbers gen script')
-disp([output_dir filesep 'motion_numbers.mat'])
-save([output_dir filesep 'motion_numbers.mat'],'motion_numbers');
+disp([output_dir filesep output_prefix '_motion_numbers.mat'])
+save([output_dir filesep output_prefix '_motion_numbers.mat'],'motion_numbers');
