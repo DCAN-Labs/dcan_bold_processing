@@ -7,7 +7,7 @@ function analyses_v2(config_path)
 
     path_wb_c = conf_json.path_wb_c;
     taskname = conf_json.taskname;
-    FNL_preproc_version = conf_json.FNL_preproc_version;
+    version = conf_json.version;
     epi_TR = conf_json.epi_TR;
     summary_Dir = conf_json.summary_Dir;
     brain_radius_in_mm = conf_json.brain_radius_in_mm;
@@ -20,11 +20,11 @@ function analyses_v2(config_path)
 
     %silence warnings
     warning('off', 'all')
-    
+
     %% Make cat figure (Added by Oscar on Dec 10, 2015)
 
     % @ WARNING This is a hard coded expected file path...
-    temp_files = sorter([summary_Dir filesep 'temp_grayplotdata_' 
+    temp_files = sorter([summary_Dir filesep 'temp_grayplotdata_' ...
         taskname '*.mat'],taskname);
     cat_FD = [];
     cat_DVAR_pre_reg = [];
@@ -53,7 +53,7 @@ function analyses_v2(config_path)
             cat_DVAR_post_reg, cat_DVAR_post_all,summary_Dir);
     catch ERROR
         disp(ERROR.message)
-        disp(['there was an error creating the concatenated grayplots '
+        disp(['there was an error creating the concatenated grayplots ' ...
             'figure.'])
         %exit
     end
@@ -66,7 +66,7 @@ function analyses_v2(config_path)
         disp(['there was an error creating the concatenated post reg ' ...
             'grayplots figure.'])
         %exit
-    end   
+    end
 
 
 
@@ -86,58 +86,67 @@ function analyses_v2(config_path)
         disp(['ERROR: Check the existence of a good Movement_Regressors.txt file.  No motion_numbers.txt file here: ' fullfile(path_motion_numbers)])
         exit
     end
-    display ([num2str(length(FD_movement_files)) 
+    display ([num2str(length(FD_movement_files)) ...
         ' individual motion_number files were identified'])
 
     %% calculate content of motion folder
-    subject_FD_parse_v2(FD_movement_files, skip_seconds, epi_TR, ...
-        brain_radius_in_mm, result_dir)
-    disp('starting subject_motion_numbers_TXT_parse_v2')
+    subject_FD_parse_BIDS(FD_movement_files, skip_seconds, epi_TR, ...
+        brain_radius_in_mm, result_dir, taskname)
+
+    disp('starting subject_motion_numbers_TXT_parse_BIDS')
     disp(FD_movement_files)
     disp(result_dir)
-    subject_motion_numbers_TXT_parse_v2(FD_movement_files, result_dir)
-    disp('subject_motion_numbers_TXT_parse_v2 complete')
-    subject_power_2014_FD_only_parse(FD_movement_files, skip_seconds, ...
-        epi_TR, expected_contiguous_frame_count, result_dir)
-    subject_power_2014_motion_parse_v2_opt(FD_movement_files, ...
-        skip_seconds, epi_TR, expected_contiguous_frame_count, result_dir)
-    motion_summary([result_dir filesep 'motion_numbers.mat'], ...
-        [result_dir filesep 'power_2014_FD_only.mat'], result_dir);
+
+    subject_motion_numbers_TXT_parse_BIDS(FD_movement_files, result_dir, taskname)
+
+    disp('subject_motion_numbers_TXT_parse_BIDS complete')
+
+    subject_power_2014_FD_only_parse_BIDS(FD_movement_files, skip_seconds, ...
+        epi_TR, expected_contiguous_frame_count, result_dir, taskname)
+    subject_power_2014_motion_parse_opt_BIDS(FD_movement_files, ...
+        skip_seconds, epi_TR, expected_contiguous_frame_count, result_dir, taskname)
+    motion_summary_BIDS([result_dir filesep taskname '_motion_numbers.mat'], ...
+        [result_dir filesep taskname '_power_2014_FD_only.mat'], result_dir, taskname);
 
     %% Make the csv timecourses
-    dummy = strtrim(ls(fullfile(path_ciftis, '*ptseries*')));
-    ptseries_files = strsplit(dummy, '\n');
-    n_ptseries = length(ptseries_files);
-    disp([num2str(n_ptseries) 
-        ' individual ptseries files were identified'])
-    for i=1:n_ptseries
-        try
-            filename = ptseries_files{i};
-            [~, name, ~] = fileparts(filename);
-
-            cifti_txt_path = [result_dir '/temp_FNL_cifti.txt'];
-            cmd = [path_wb_c ' -cifti-convert -to-text ' filename ' ' 
-                cifti_txt_path];
-            system(cmd);
-            X = dlmread(cifti_txt_path);
-            system(['rm -f ' cifti_txt_path]);
-
-            dummy = regexp(name, [FNL_preproc_version '_'], 'split');
-            dummy = regexp(dummy{2}, '.ptseries', 'split');
-            csv_name = [dummy{1} '.csv'];
-            csvwrite([path_timecourses filesep csv_name], X')
-            disp(['Writing ' csv_name]);
-        catch
-            disp([name 'does not exist'])
+    dummy = dir(fullfile(path_ciftis, '*ptseries*'));
+    if ~isempty(dummy)
+        ptseries_files = {}
+        for i = 1:length(dummy)
+            ptseries_files{i} = fullfile(dummy(i).folder,dummy(i).name);
+        end
+        n_ptseries = length(ptseries_files);
+        disp([num2str(n_ptseries) ...
+            ' individual ptseries files were identified'])
+        for i=1:n_ptseries
+            try
+                filename = ptseries_files{i};
+                [~, name, ~] = fileparts(filename);
+                
+                cifti_txt_path = [result_dir filesep 'temp_FNL_cifti.txt'];
+                cmd = [path_wb_c ' -cifti-convert -to-text ' filename ' ' ...
+                    cifti_txt_path];
+                system(cmd);
+                X = dlmread(cifti_txt_path);
+                system(['rm -f ' cifti_txt_path]);
+                
+                dummy = regexp(name, [version '_'], 'split');
+                dummy = regexp(dummy{2}, '.ptseries', 'split');
+                csv_name = [dummy{1} '.csv'];
+                csvwrite([path_timecourses filesep csv_name], X')
+                disp(['Writing ' csv_name]);
+            catch
+                disp([name 'does not exist'])
+            end
         end
     end
+    
+    % copy <taskname>_FD*.txt into <taskname>_all_FD.txt
+    system(['rm -f ' summary_Dir filesep taskname '_all_FD.txt']);
 
-    % copy FD*.txt into all_FD.txt
-    system(['rm -f ' summary_Dir '/all_FD.txt']);
+    system(['cat ' summary_Dir filesep 'FD_' taskname '*.txt >> ' summary_Dir filesep taskname '_all_FD.txt']);
 
-    system(['cat ' summary_Dir '/FD*.txt >> ' summary_Dir '/all_FD.txt']);
-
-    FD = dlmread([summary_Dir filesep 'all_FD.txt']);
+    FD = dlmread([summary_Dir filesep taskname '_all_FD.txt']);
     hist(FD, 100, 'facecolor', 'g')
 
     % Create FD figure
@@ -185,7 +194,7 @@ function analyses_v2(config_path)
     %% Uncomment the following line to preserve the Y-limits of the axes
     ylim(subplot2,[-10 10]);
 
-    saveas(figure1, [ summary_Dir '/FD_dist.png' ])
+    saveas(figure1, [ summary_Dir filesep taskname '_FD_dist.png' ])
 
     exit
 end

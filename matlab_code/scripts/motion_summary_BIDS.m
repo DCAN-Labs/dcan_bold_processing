@@ -1,4 +1,4 @@
-function motion_summary(motion_numbers_file,FD_thresholds_file,output_folder)
+function motion_summary_BIDS(motion_numbers_file,FD_thresholds_file,output_folder,output_prefix)
 
 load(motion_numbers_file)
 load(FD_thresholds_file)
@@ -29,4 +29,4 @@ for i = 1:length(motion_indices)
     outstruct.(strrep([ 'remaining_seconds_at_FD_' num2str(FD_thresholds(i),'%.2f') ],'.','_')) = remaining_seconds(i);
 end
 
-writetable(struct2table(outstruct),[output_folder filesep 'motion_summary_table.csv']);
+writetable(struct2table(outstruct),[output_folder filesep output_prefix '_motion_summary_table.csv']);
