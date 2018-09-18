@@ -590,7 +590,7 @@ def get_parcels(parcellation_folder, space='fsLR'):
     parcel_names = []
     for x in candidates:
         label_name = os.path.basename(os.path.dirname(x[0]))
-        score = '%s.32k_fs_LR.dlabel.nii' % label_name in x[1] + \
+        score = ( ('%s.32k_fs_LR.dlabel.nii' % label_name) in x[1] ) + \
             2 * ('%s.subcortical.32k_fs_LR.dlabel.nii' % label_name in x[1])
         if score:
             parcel_names.append((label_name, score))
