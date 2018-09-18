@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+ks fo#!/usr/bin/env python3
 
 __prog__ = 'DCANBOLDProc'
 __version__ = '4.0.0'
@@ -269,18 +269,18 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
         concatlist = []
         for bids_task in tasknames:
-            concatlist.append(sorted([ d for d in os.listdir(output_results)
-                                       if os.path.isdir(os.path.join(output_results,d))
-                                       and bids_task in d ]))
+            concatlist.append([d for d in tasklist.split(',')
+                               if os.path.isdir(os.path.join(output_results,d))
+                               and bids_task in d ])
 
         concatenate(concatlist, output_folder)
         parcellate(concatlist, output_folder)
 
         # setup inputs, then run analyses_v2
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
-        for task_set in tasklist:
-            if len(tasklist) > 0:
-                taskset = tasklist[0][:-2]
+        for concat in concatlist:
+            if len(concat) > 0:
+                taskset = concat[0][:-2]
 
             print('Running analyses_v2 on %s' % taskset)
 
@@ -500,8 +500,8 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
 def concatenate(concatlist, output_folder):
     version_name = '%s_v%s' % (__prog__, __version__)
 
-    for tasklist in concatlist:
-        for i,task in enumerate(tasklist):
+    for concat in concatlist:
+        for i,task in enumerate(concat):
             taskname = task[:-2]
             base_results_folder = os.path.join(output_folder, 'MNINonLinear',
                                           'Results')
@@ -530,37 +530,36 @@ def parcellate(concatlist, output_folder):
     parcellation_folder = os.path.join(here, 'templates', 'parcellations')
     parcellations = get_parcels(parcellation_folder)
 
-    for tasklist in concatlist:
+    for concat in concatlist:
 
-        for i,task in enumerate(tasklist):
-            taskname = task[:-2]
-            base_results_folder = os.path.join(output_folder, 'MNINonLinear',
+        taskname = concat[0][:-2]
+        base_results_folder = os.path.join(output_folder, 'MNINonLinear',
                                           'Results')
-            # parcellation
-            for parcel_name, filename in parcellations:
-                output_subcorticals = os.path.join(
-                    base_results_folder,
-                    '%s_%s_%s_subcorticals.ptseries.nii' %
-                    (taskname, version_name, parcel_name)
-                )
-                output_parcellation = os.path.join(
-                    base_results_folder,
-                    '%s_%s_%s.ptseries.nii' %
-                    (taskname, version_name, parcel_name)
-                )
-                parcels = os.path.join(
-                    parcellation_folder, parcel_name, 'fsLR',
-                    '%s.32k_fs_LR.dlabel.nii' % parcel_name
-                )
-                subcorticals = os.path.join(
-                    parcellation_folder, parcel_name, 'fsLR',
-                    '%s.subcortical.32k_fs_LR.dlabel.nii' % parcel_name
-                )
-                for parc in [output_parcellation, output_subcorticals]:
-                    cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
-                           '-cifti-parcellate', output_concat_dtseries,
-                           'COLUMN', parc]
-                    subprocess.call(cmd)
+        # parcellation
+        for parcel_name, filename in parcellations:
+            output_subcorticals = os.path.join(
+                base_results_folder,
+                '%s_%s_%s_subcorticals.ptseries.nii' %
+                (taskname, version_name, parcel_name)
+            )
+            output_parcellation = os.path.join(
+                base_results_folder,
+                '%s_%s_%s.ptseries.nii' %
+                (taskname, version_name, parcel_name)
+            )
+            parcels = os.path.join(
+                parcellation_folder, parcel_name, 'fsLR',
+                '%s.32k_fs_LR.dlabel.nii' % parcel_name
+            )
+            subcorticals = os.path.join(
+                parcellation_folder, parcel_name, 'fsLR',
+                '%s.subcortical.32k_fs_LR.dlabel.nii' % parcel_name
+            )
+            for parc in [output_parcellation, output_subcorticals]:
+                cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
+                       '-cifti-parcellate', output_concat_dtseries,
+                       'COLUMN', parc]
+                subprocess.call(cmd)
 
 
 def get_parcels(parcellation_folder):
