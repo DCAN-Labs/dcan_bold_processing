@@ -1,4 +1,4 @@
-ks fo#!/usr/bin/env python3
+#! /usr/bin/env python3
 
 __prog__ = 'DCANBOLDProc'
 __version__ = '4.0.0'
@@ -536,7 +536,7 @@ def parcellate(concatlist, output_folder):
         base_results_folder = os.path.join(output_folder, 'MNINonLinear',
                                           'Results')
         # parcellation
-        for parcel_name, filename in parcellations:
+        for parcel_name, score in parcellations:
             output_subcorticals = os.path.join(
                 base_results_folder,
                 '%s_%s_%s_subcorticals.ptseries.nii' %
@@ -555,15 +555,44 @@ def parcellate(concatlist, output_folder):
                 parcellation_folder, parcel_name, 'fsLR',
                 '%s.subcortical.32k_fs_LR.dlabel.nii' % parcel_name
             )
-            for parc in [output_parcellation, output_subcorticals]:
+            # score of 1 is cortical, 2 is subcortical, and 3 is both
+            if score in (1, 3):
                 cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
                        '-cifti-parcellate', output_concat_dtseries,
-                       'COLUMN', parc]
+                       parcels, 'COLUMN', output_parcellation]
+                subprocess.call(cmd)
+            if score in (2, 3):
+                cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
+                        '-cifti-parcellate', output_concat_dtseries,
+                        subcorticals, 'COLUMN', output_subcorticals]
                 subprocess.call(cmd)
 
 
-def get_parcels(parcellation_folder):
-    pass
+def get_parcels(parcellation_folder, space='fsLR'):
+    """
+    gets the valid labels out of the parcellation folder.
+    :param parcellation_folder: base directory for parcellations
+    :param space: name of the space for the parcellations
+    :return: list of 2-tuples, first element is the name of the label, the
+    second element is a score:
+    1: only a cortical dlabel exists.
+    2: only a subcortical dlabel exists.
+    3: both cortical and subcortical dlabel files exist.
+    """
+    walker = list(os.walk(parcellation_folder))
+    # find all folders which contain a space subdirectory
+    candidates = [x for x in walker if space == os.path.basename(x[0])]
+    # check that the proper dlabel files can be found.
+    parcel_names = []
+    for x in candidates:
+        label_name = os.path.basename(os.path.dirname(x[0]))
+        score = '%s.32k_fs_LR.dlabel.nii' % label_name in x[1] + \
+            2 * ('%s.subcortical.32k_fs_LR.dlabel.nii' % label_name in x[1])
+        if score:
+            parcel_names.append((label_name, score))
+        else:
+            print('%s is a bad label file directory' % label_name)
+    return parcel_names
 
 
 if __name__ == '__main__':
