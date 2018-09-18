@@ -270,9 +270,10 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         concatlist = []
         for commalist in tasklist:
             for bids_task in tasknames:
-                concatlist.append([d for d in commalist.split(',')
-                                   if os.path.isdir(os.path.join(output_results,d))
-                                   and bids_task in d ])
+                if bids_task in commalist:
+                    concatlist.append([d for d in commalist.split(',')
+                                       if os.path.isdir(os.path.join(output_results,d))
+                                       and bids_task in d ])
 
         concatenate(concatlist, output_folder)
         parcellate(concatlist, output_folder)
@@ -315,7 +316,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             }
 
             analyses_v2_json_path = os.path.join(analysis_folder, 'matlab_code',
-                                                 taskname + '_analyses_v2_mat_config.json')
+                                                 taskset + '_analyses_v2_mat_config.json')
 
             # write input json for matlab script
             with open(analyses_v2_json_path, 'w') as fd:
