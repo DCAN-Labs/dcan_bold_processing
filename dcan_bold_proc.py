@@ -268,10 +268,11 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                                      and 'task-' in d])))
 
         concatlist = []
-        for bids_task in tasknames:
-            concatlist.append([d for d in tasklist.split(',')
-                               if os.path.isdir(os.path.join(output_results,d))
-                               and bids_task in d ])
+        for commalist in tasklist:
+            for bids_task in tasknames:
+                concatlist.append([d for d in commalist.split(',')
+                                   if os.path.isdir(os.path.join(output_results,d))
+                                   and bids_task in d ])
 
         concatenate(concatlist, output_folder)
         parcellate(concatlist, output_folder)
