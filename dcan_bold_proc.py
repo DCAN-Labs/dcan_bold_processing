@@ -126,7 +126,7 @@ def generate_parser(parser=None):
     parser.add_argument('--skip-seconds', type=int, default=5,
                         help='number of seconds to cut off the beginning of '
                              'fmri time series.')
-    parser.add_argument('--contiguous_frames', type=int, default=9,
+    parser.add_argument('--contiguous-frames', type=int, default=9,
                         help='number of contigious frames for power 2014 fd '
                              'thresholding.')
     parser.add_argument('--setup', action='store_true',
@@ -218,8 +218,8 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         'config': os.path.join(output_folder, 'MNINonLinear', 'Results', task,
                                version_name,
                                '%s_mat_config.json' % version_name),
-        'output_ciftis': os.path.join(output_folder, version_name,
-                                      'analyses_v2','workbench'),
+#        'output_ciftis': os.path.join(output_folder, version_name,
+#                                      'analyses_v2','workbench'),
         'output_motion_numbers': os.path.join(output_folder, 'MNINonLinear',
                                               'Results', task, version_name,
                                               'motion_numbers.txt'),
@@ -310,7 +310,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                                                     'Results', taskset + '*',
                                                     version_name,
                                                     'motion_numbers.txt'),
-                'path_ciftis': output_spec['output_ciftis'],
+                'path_ciftis': os.path.join(output_folder, 'MNINonLinear', 'Results'),
                 'path_timecourses': output_spec['output_timecourses'],
                 'skip_seconds': skip_seconds,
             }
@@ -324,6 +324,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
             executable = os.path.join(here, 'bin', 'run_analyses_v2.sh')
             cmd = [executable, os.environ['MCRROOT'], analyses_v2_json_path]
+            print(cmd)
             subprocess.call(cmd)
 
     # This is the case that loops over tasks
@@ -538,6 +539,9 @@ def parcellate(concatlist, output_folder):
 
             base_results_folder = os.path.join(output_folder, 'MNINonLinear',
                                                'Results')
+            output_concat_dtseries = os.path.join(base_results_folder,
+                                                  '%s_%s_Atlas.dtseries.nii' %
+                                                  (taskname, version_name)) 
             # parcellation
             for parcel_name, score in parcellations:
                 print("Parcellating with %s" % parcel_name)
@@ -564,11 +568,13 @@ def parcellate(concatlist, output_folder):
                     cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
                            '-cifti-parcellate', output_concat_dtseries,
                            parcels, 'COLUMN', output_parcellation]
+                    print(cmd)
                     subprocess.call(cmd)
                 if score in (2, 3):
                     cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
                             '-cifti-parcellate', output_concat_dtseries,
                             subcorticals, 'COLUMN', output_subcorticals]
+                    print(cmd)
                     subprocess.call(cmd)
 
 
@@ -589,13 +595,16 @@ def get_parcels(parcellation_folder, space='fsLR'):
     # check that the proper dlabel files can be found.
     parcel_names = []
     for x in candidates:
+        print(x)
         label_name = os.path.basename(os.path.dirname(x[0]))
-        score = ( ('%s.32k_fs_LR.dlabel.nii' % label_name) in x[1] ) + \
-            2 * ('%s.subcortical.32k_fs_LR.dlabel.nii' % label_name in x[1])
+        score = ( ('%s.32k_fs_LR.dlabel.nii' % label_name) in x[2] ) + \
+            2 * ('%s.subcortical.32k_fs_LR.dlabel.nii' % label_name in x[2])
+        print(score)
         if score:
             parcel_names.append((label_name, score))
         else:
             print('%s is a bad label file directory' % label_name)
+    print(parcel_names)
     return parcel_names
 
 
