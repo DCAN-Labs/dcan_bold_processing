@@ -8,6 +8,7 @@ import json
 import os
 import subprocess
 import shutil
+import sys
 
 here = os.path.dirname(os.path.realpath(__file__))
 
@@ -19,6 +20,10 @@ def _cli():
     """
     parser = generate_parser()
     args = parser.parse_args()
+
+    if args.version:
+        print('%s_v%s' % (__prog__, __version__))
+        sys.exit()
 
     kwargs = {
         'subject': args.subject,
@@ -148,6 +153,9 @@ def generate_parser(parser=None):
                         help='radius of brain for computation of framewise '
                              'displacement'
                         )
+    parser.add_argument('-v', '--version', action='version', 
+                        version='%s_v%s' % (__prog__, __version__),
+                        help='print the software name and version')
 
     return parser
 
