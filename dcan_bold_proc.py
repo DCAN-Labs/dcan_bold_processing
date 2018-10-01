@@ -245,6 +245,14 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
     }
     output_spec.update(kwargs.get('output_spec', {}))
 
+    # check integrity of filter parameters:
+    if lower_bpf and upper_bpf:
+        assert lower_bpf < upper_bpf, 
+               'lower bandpass limit exceeds upper limit.'
+    if band_stop_min and band_stop_max:
+        assert band_stop_min < band_stop_max, 
+               'lower bandstop limit exceeds upper limit.'
+
     if setup:
         print('removing old %s outputs' % version_name)
         # delete existing fnlpp results
