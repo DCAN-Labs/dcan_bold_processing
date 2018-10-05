@@ -116,11 +116,11 @@ def generate_parser(parser=None):
                         help='number of filter coeffecients for the band-stop '
                              'filter.'
                         )
-    parser.add_argument('--band-stop-min', type=float,
+    parser.add_argument('--band-stop-min', type=float_or_None,
                         help='lower frequency (bpm) for the band-stop '
                              'motion filter.'
                         )
-    parser.add_argument('--band-stop-max', type=float,
+    parser.add_argument('--band-stop-max', type=float_or_None,
                         help='upper frequency (bpm) for the band-stop '
                              'motion filter.'
                         )
@@ -610,6 +610,13 @@ def get_parcels(parcellation_folder, space='fsLR'):
             print('%s is a bad label file directory' % label_name)
     print(parcel_names)
     return parcel_names
+
+
+def float_or_None(x):
+    if x == 'None':
+        return None
+    else:
+        return float(x)
 
 
 if __name__ == '__main__':
