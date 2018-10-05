@@ -21,10 +21,6 @@ def _cli():
     parser = generate_parser()
     args = parser.parse_args()
 
-    if args.version:
-        print('%s_v%s' % (__prog__, __version__))
-        sys.exit()
-
     kwargs = {
         'subject': args.subject,
         'task': args.task,
