@@ -352,7 +352,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
         # filter motion regressors if a bandstop filter is specified
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
-        if motion_filter_type:
+        if band_stop_min or band_stop_max:
             movreg_basename = os.path.basename(
                 input_spec['movement_regressors'])
             filtered_movement_regressors = os.path.join(
