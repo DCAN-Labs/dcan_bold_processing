@@ -1,7 +1,33 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 
 __prog__ = 'DCANBOLDProc'
 __version__ = '4.0.0'
+__doc__ = \
+"""Wraps the compiled DCAN Signal Processing Matlab script, version: %s. 
+Runs in 3 main modes:  [setup], [task], and [teardown].
+
+[setup]: creates white matter and ventricular masks for regression, must be 
+         run prior to task.
+
+[task]: computes fd numbers [1][2], runs regressions on a given task/fmri [3] 
+        and outputs a corrected dtseries, along with motion numbers in an 
+        hdf5 (.mat) formatted file.
+
+[teardown]: concatenates any resting state runs into a single dtseries, and 
+            parcellates all final tasks.""" % __version__
+__references__ = \
+"""References
+----------
+
+[1] Fair DA, Miranda-Dominguez O, et al. Correction of respiratory artifacts 
+in MRI head motion estimates. bioRxiv [Internet]. 2018 Jan 1; Available from: 
+http://biorxiv.org/content/early/2018/06/07/337360.abstract
+[2] Power J, et al. Methods to detect, characterize, and remove motion 
+artifact in resting state fMRI. Neuroimage [Internet]. Elsevier Inc.; 2014 
+Jan 1 [cited 2014 Jul 9];84:32041. doi: 10.1016/j.neuroimage.2013.08.048.
+[3] Friston KJ, et al. Movement-related effects in fMRI time-series. Magn 
+Reson Med [Internet]. 1996;35(3):34655. doi: 10.1016/j.neuroimage.2013.08.048
+"""
 
 import argparse
 import json
@@ -54,105 +80,115 @@ def generate_parser(parser=None):
     """
     if not parser:
         parser = argparse.ArgumentParser(
-            prog='dcan_signal_processing.py',
-            description="""
-            Wraps the compiled DCAN Signal Processing Matlab script,
-            version: %s.  Runs in 3 main modes:  [setup], [task],
-            and [teardown].
-
-            [setup]: creates white matter and ventricular masks for regression,
-            must be run prior to task.
-
-            [task]: runs regressions on a given task/fmri and outputs a
-            corrected dtseries, along with power 2014 motion numbers in an
-            hdf5 (.mat) format file.
-
-            [teardown]: concatenates any resting state runs into a single
-            dtseries, and parcellates all final tasks.
-            """ % __version__,
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+            prog='dcan_bold_proc.py',
+            description=__doc__,
+            epilog=__references__,
+            formatter_class=argparse.RawDescriptionHelpFormatter
         )
-    parser.add_argument('--subject', required=True,
-                        help='subject/participant id')
-    parser.add_argument('--task', required=True,
-                        help='name of fmri data as used in the dcan fmri '
-                             'pipeline.  For bids data it is set to "task-NAME"'
-                        )
-    parser.add_argument('--output-folder',
-                        help='output folder which contains all files produced '
-                             'by the dcan fmri-pipeline.  Used for setting up '
-                             'standard inputs and outputs'
-                        )
-    parser.add_argument('--fd-threshold', type=float, default=0.3,
-                        help='upper frame-wise displacement threshold for use '
-                             'in signal regression.'
-                        )
-    parser.add_argument('--filter-order', type=int, default=2,
-                        help='number of filter coefficients for bold bandpass '
-                             'filter.'
-                        )
-    parser.add_argument('--lower-bpf', type=float, default=0.009,
-                        help='lower cut-off frequency (Hz) for the butterworth '
-                             'bandpass filter.')
-    parser.add_argument('--upper-bpf', type=float, default=0.080,
-                        help='upper cut-off frequency (Hz) for the butterworth '
-                             'bandpass filter.')
-    parser.add_argument('--motion-filter-type', choices=['notch','lp'], default=None,
-                        help='type of band-stop filter to use for removing '
-                             'respiratory artifact from motion regressors. '
-                             'Current options are \'notch\' for a notch '
-                             'filter or \'lp\' for a lowpass filter.'
-                        )
-    parser.add_argument('--physio',
-                        help='input .tsv file containing physio data to '
-                             'automatically determine motion filter '
-                             'parameters. Columns, start time, and frequency '
-                             'will also need to be specified. NOT IMPLEMENTED.'
-                        )
-    parser.add_argument('--motion-filter-option', type=int, default=5,
-                        help='determines direction(s) in which to filter '
-                             'respiratory artifact.'
-                        )
-    parser.add_argument('--motion-filter-order', type=int, default=4,
-                        help='number of filter coeffecients for the band-stop '
-                             'filter.'
-                        )
-    parser.add_argument('--band-stop-min', type=float_or_None,
-                        help='lower frequency (bpm) for the band-stop '
-                             'motion filter.'
-                        )
-    parser.add_argument('--band-stop-max', type=float_or_None,
-                        help='upper frequency (bpm) for the band-stop '
-                             'motion filter.'
-                        )
-    parser.add_argument('--skip-seconds', type=int, default=5,
-                        help='number of seconds to cut off the beginning of '
-                             'fmri time series.')
-    parser.add_argument('--contiguous-frames', type=int, default=9,
-                        help='number of contigious frames for power 2014 fd '
-                             'thresholding.')
-    parser.add_argument('--setup', action='store_true',
-                        help='prepare white matter and ventricle masks, '
-                             'must be run prior to individual task runs.'
-                        )
-    parser.add_argument('--teardown', action='store_true',
-                        help='after tasks have completed, concatenate resting '
-                             'state data and parcellate.'
-                        )
-    parser.add_argument('--tasklist', action='append',
-                        help='comma delimited tasks to be concatenated, pass '
-                             'in argument multiple times to add more task '
-                             'lists.  Also determines which tasks will be '
-                             'parcellated, so a single task may be input to '
-                             'parcellate it.'
-                        )
-    parser.add_argument('--brain-radius', type=int,
-                        help='radius of brain for computation of framewise '
-                             'displacement'
-                        )
-    parser.add_argument('-v', '--version', action='version', 
-                        version='%s_v%s' % (__prog__, __version__),
-                        help='print the software name and version')
+    parser.add_argument(
+        '-v', '--version', action='version', 
+        version='%s_v%s' % (__prog__, __version__),
+        help='print the software name and version'
+    )
+    parser.add_argument(
+        '--setup', action='store_true',
+        help='prepare white matter and ventricle masks, must be run prior to '
+             'individual task runs.'
+    )
+    parser.add_argument(
+        '--subject', required=True, help='subject/participant id'
+    )
+    parser.add_argument(
+        '--task', required=True,
+        help='name of fmri data as used in the dcan fmri pipeline.  For bids '
+             'data it is set to "task-NAME"'
+    )
+    parser.add_argument(
+        '--output-folder',
+        help='output folder which contains all files produced by the dcan '
+             'fmri-pipeline.  Used for setting up standard inputs and outputs'
+    )
+    bold_filter = parser.add_argument_group(
+        'bold signal filtering',  'bold signal filtering parameters.')
+    bold_filter.add_argument(
+        '--filter-order', type=int, default=2,
+        help='number of filter coefficients for butterworth bandpass filter.'
+    )
+    bold_filter.add_argument(
+        '--lower-bpf', type=float, default=0.009,
+        help='lower cut-off frequency (Hz) for the butterworth bandpass '
+             'filter.'
+    )
+    bold_filter.add_argument(
+        '--upper-bpf', type=float, default=0.080,
+        help='upper cut-off frequency (Hz) for the butterworth bandpass '
+             'filter.'
+    )
+    fd = parser.add_argument_group(
+        'framewise displacement', 'parameters related to computation of '
+                                  'framewise displacment (FD)')
+    fd.add_argument(
+        '--fd-threshold', type=float, default=0.3,
+        help='upper framewise displacement threshold for use in signal '
+             'regression.'
+    )
+    fd.add_argument(
+        '--skip-seconds', type=int, default=5,
+        help='number of seconds to cut off the beginning of fmri time series.'
+    )
+    fd.add_argument(
+        '--contiguous-frames', type=int, default=5,
+        help='number of contigious frames for power 2014 fd thresholding.'
+    )
+    fd.add_argument(
+        '--brain-radius', type=int,
+        help='radius of brain for computation of rotational displacements'
+    )
+    fd.add_argument(
+        '--motion-filter-type', choices=['notch','lp'], default=None,
+        help='type of band-stop filter to use for removing respiratory '
+             'artifact from motion regressors. Current options are \'notch\' '
+             'for a notch filter or \'lp\' for a lowpass filter.'
+    )
+    fd.add_argument(
+       '--motion-filter-order', type=int, default=4,
+       help='number of filter coeffecients for the band-stop filter.'
+    )
+    fd.add_argument(
+        '--band-stop-min', type=float_or_None,
+        help='lower frequency (bpm) for the band-stop motion filter.'
+    )
+    fd.add_argument(
+        '--band-stop-max', type=float_or_None,
+        help='upper frequency (bpm) for the band-stop motion filter.'
+    )
+    fd.add_argument(
+       '--motion-filter-option', type=int, default=5,
+       help='determines direction(s) in which to filter respiratory '
+            'artifact. Default is all directions.'
+    )
+    teardown = parser.add_argument_group(
+        'final concatenation', 'final stage parameters for after setup and '
+                               'tasks. Concatenates, parcellates, \nand '
+                               'saves combined FD numbers.')
+    teardown.add_argument(
+        '--teardown', action='store_true',
+        help='flag to run final concatenation steps.  After tasks have '
+             'completed, concatenate resting state data and parcellate.'
+    )
+    teardown.add_argument(
+        '--tasklist', action='append',
+        help='comma delimited tasks to be concatenated, pass in argument '
+             'multiple times to add more task lists.  Also determines which '
+             'tasks will be parcellated, so a single task may be input to '
+             'parcellate it. Required for this stage.  May be a list of one.'
+    )
+    fd.add_argument(
+        '--physio',
+        help='input .tsv file containing physio data to automatically '
+             'determine motion filter parameters. Columns, start time, and '
+             'frequency will also need to be specified. NOT IMPLEMENTED.'
+    )
 
     return parser
 
@@ -622,7 +658,7 @@ def get_parcels(parcellation_folder, space='fsLR'):
 
 
 def float_or_None(x):
-    if x == 'None':
+    if x.lower() == 'none':
         return None
     else:
         return float(x)
