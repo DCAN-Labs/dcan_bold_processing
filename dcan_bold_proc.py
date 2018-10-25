@@ -26,6 +26,7 @@ def _cli():
         'task': args.task,
         'output_folder': args.output_folder,
         'fd_threshold': args.fd_threshold,
+        'contiguous_frames': args.contiguous_frames,
         'filter_order': args.filter_order,
         'lower_bpf': args.lower_bpf,
         'upper_bpf': args.upper_bpf,
