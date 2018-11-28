@@ -66,7 +66,8 @@ def _cli():
         'brain_radius': args.brain_radius,
         'setup': args.setup,
         'teardown': args.teardown,
-        'tasklist': args.tasklist
+        'tasklist': args.tasklist,
+        'resolutions': args.resolutions
     }
 
     return interface(**kwargs)
@@ -107,6 +108,15 @@ def generate_parser(parser=None):
         '--output-folder',
         help='output folder which contains all files produced by the dcan '
              'fmri-pipeline.  Used for setting up standard inputs and outputs'
+    )
+    setup =  parser.add_argument_group(
+        'wm/vent regressors',  'options for obtaining white matter and '
+                               'ventricle signal regressors')
+    setup.add_argument(
+        '--resolutions', type=float, nargs=2,
+        metavar=('FMRI_RES', 'GRAY_RES'), default=[2., 2.],
+        help='resolutions (mm) for final fmri volume and grayordinate volume '
+             'ROIs. Default is 2 for both.'
     )
     bold_filter = parser.add_argument_group(
         'bold signal filtering',  'bold signal filtering parameters.')
@@ -189,6 +199,7 @@ def generate_parser(parser=None):
              'determine motion filter parameters. Columns, start time, and '
              'frequency will also need to be specified. NOT IMPLEMENTED.'
     )
+    
 
     return parser
 
@@ -306,8 +317,15 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             os.mkdir(output_spec['summary_folder'])
 
         # create white matter and ventricle masks for regression
+        fmri_res = kwargs['resolutions'][0]
+        gray_res = kwargs['resolutions'][1]
+        mmkwargs = {}
+        if fmri_res == gray_res:
+            # for interpolationa and smoothing of rois.
+            mmkwargs['fmri_res'] = fmri_res
+            mmkwargs['roi_res'] = gray_res
         make_masks(input_spec['segmentation'], output_spec['wm_mask'],
-                   output_spec['vent_mask'])
+                   output_spec['vent_mask'], **mmkwargs)
 
     elif teardown:
         output_results = os.path.join(output_folder, 'MNINonLinear', 'Results')
@@ -507,7 +525,8 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
     wd = os.path.dirname(wm_mask_out)
     # set parameter defaults
     defaults = dict(wm_lt_R=2950, wm_ut_R=3050, wm_lt_L=3950, wm_ut_L=4050,
-                    vent_lt_R=43, vent_ut_R=43, vent_lt_L=4, vent_ut_L=4)
+                    vent_lt_R=43, vent_ut_R=43, vent_lt_L=4, vent_ut_L=4,
+                    fmri_res=2, roi_res=2)
     # set temporary filenames
     tempfiles = {
         'wm_mask_L': os.path.join(wd, 'tmp_left_wm.nii.gz'),
@@ -528,19 +547,28 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
         'fslmaths {segmentation} -thr {wm_lt_R} -uthr {wm_ut_R} {wm_mask_R}',
         'fslmaths {segmentation} -thr {wm_lt_L} -uthr {wm_ut_L} {wm_mask_L}',
         'fslmaths {wm_mask_R} -add {wm_mask_L} -bin {wm_mask}',
-        'fslmaths {wm_mask} -kernel gauss 2 -ero {wm_mask_out}',
+        'fslmaths {wm_mask} -kernel gauss {sigma} -ero {wm_mask_out}',
         'fslmaths {segmentation} -thr {vent_lt_R} -uthr {vent_ut_R} '
         '{vent_mask_R}',
         'fslmaths {segmentation} -thr {vent_lt_L} -uthr {vent_ut_L} '
         '{vent_mask_L}',
         'fslmaths {vent_mask_R} -add {vent_mask_L} -bin {vent_mask}',
-        'fslmaths {vent_mask} -kernel gauss 2 -ero {vent_mask_out}'
+        'fslmaths {vent_mask} -kernel gauss {roi_res} -ero {vent_mask_out}'
     ]
-    # format and run commands
+    resamplecmd = [
+        'flirt -in {wm_mask} -ref {wm_mask} -applyisoxfm {fmri_res} -out '
+        '{wm_mask}',
+        'flirt -in {vent_mask} -ref {vent_mask} -applyisoxfm {fmri_res} -out '
+        '{vent_mask}'
+    ]
+    # get params
     defaults.update(kwargs)
     kwargs.update(defaults)
     kwargs.update(iofiles)
     kwargs.update(tempfiles)
+    if kwargs['fmri_res'] != kwargs['roi_res']:
+        cmdlist += resamplecmd
+    # format and run commands
     for cmdfmt in cmdlist:
         cmd = cmdfmt.format(**kwargs)
         subprocess.call(cmd.split())
