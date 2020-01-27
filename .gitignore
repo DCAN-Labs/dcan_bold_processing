@@ -6,3 +6,4 @@ templates/parcellations/
 *.asv
 *.nii
 *.mat
+._*

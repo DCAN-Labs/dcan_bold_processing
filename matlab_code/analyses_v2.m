@@ -101,17 +101,41 @@ function analyses_v2(config_path)
 
     disp('subject_motion_numbers_TXT_parse_BIDS complete')
 
-    subject_power_2014_FD_only_parse_BIDS(FD_movement_files, skip_seconds, ...
-        epi_TR, expected_contiguous_frame_count, result_dir, taskname)
+    mat_file = subject_power_2014_FD_only_parse_BIDS(FD_movement_files, skip_seconds, ...
+        epi_TR, expected_contiguous_frame_count, result_dir, taskname);
     subject_power_2014_motion_parse_opt_BIDS(FD_movement_files, ...
-        skip_seconds, epi_TR, expected_contiguous_frame_count, result_dir, taskname)
+        skip_seconds, epi_TR, expected_contiguous_frame_count, result_dir, taskname);
     motion_summary_BIDS([result_dir filesep taskname '_motion_numbers.mat'], ...
         [result_dir filesep taskname '_power_2014_FD_only.mat'], result_dir, taskname);
+
+    %% Make the outlier mat files
+    dtseries = dir(fullfile(path_ciftis, '*.dtseries.nii'));
+    if ~isempty(dtseries)
+        dtseries_files = {};
+        for i = 1:length(dtseries)
+            dtseries_files{i} = fullfile(dtseries(i).folder,dtseries(i).name);
+        end
+        n_dtseries = length(dtseries_files);
+        disp([num2str(n_dtseries) ...
+            ' individual dtseries files were identified'])
+        for i=1:n_dtseries
+            try
+                filename = dtseries_files{i};
+                [~, name, ~] = fileparts(filename);
+
+                subject_outliers_parse_BIDS(path_wb_c, mat_file, dtseries, ...
+                    result_dir, taskname)
+
+            catch
+                disp([name 'does not exist'])
+            end
+        end
+    end
 
     %% Make the csv timecourses
     dummy = dir(fullfile(path_ciftis, '*ptseries*'));
     if ~isempty(dummy)
-        ptseries_files = {}
+        ptseries_files = {};
         for i = 1:length(dummy)
             ptseries_files{i} = fullfile(dummy(i).folder,dummy(i).name);
         end

@@ -362,7 +362,10 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                                        if os.path.isdir(os.path.join(output_results,d))
                                        and bids_task in d ])
 
+        # concatenate into dtseries
         concatenate(concatlist, output_folder)
+
+        # make ptseries
         parcellate(concatlist, output_folder)
 
         # setup inputs, then run analyses_v2
