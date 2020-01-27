@@ -1,4 +1,4 @@
-function subject_power_2014_FD_only_parse_BIDS(movement_files,skip_seconds,epi_TR,expected_contiguous_frame_count,output_dir,output_prefix)
+function output_mat = subject_power_2014_FD_only_parse_BIDS(movement_files,skip_seconds,epi_TR,expected_contiguous_frame_count,output_dir,output_prefix)
 % FD parsing Nipype wrapper pulling in list of motion files
 % Modified to read DVAR_pre_reg, DVAR_post_reg, and DVAR_post_all and store
 % values appropriately in the 51x51x3 cell array of structs
@@ -10,7 +10,7 @@ function subject_power_2014_FD_only_parse_BIDS(movement_files,skip_seconds,epi_T
 % FD_movement_files can be TXT or DAT files
 % varargin (brain_radius_in_mm) only needs to be provided for DAT file inputs
 
-FD_range = 0:0.01:0.5;
+FD_range = 0:0.01:1.0;
 motion_data = cell(1,length(FD_range));
 run_count = length(movement_files);
 
@@ -57,4 +57,5 @@ for i = 1:length(FD_range)
     
 end
 %this_path=pwd;
-save([output_dir filesep output_prefix '_power_2014_FD_only.mat'],'motion_data');
+output_mat = [output_dir filesep output_prefix '_power_2014_FD_only.mat'];
+save(output_mat,'motion_data');
