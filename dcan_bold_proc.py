@@ -66,7 +66,11 @@ def _cli():
         'brain_radius': args.brain_radius,
         'setup': args.setup,
         'teardown': args.teardown,
-        'tasklist': args.tasklist
+        'tasklist': args.tasklist,
+        'fmri_res': args.fmri_res,
+        'roi_res': args.roi_res,
+        'no_aparc': args.no_aparc,
+        'sigma': args.sigma if args.sigma else args.roi_res
     }
 
     return interface(**kwargs)
@@ -107,6 +111,28 @@ def generate_parser(parser=None):
         '--output-folder',
         help='output folder which contains all files produced by the dcan '
              'fmri-pipeline.  Used for setting up standard inputs and outputs'
+    )
+    setup =  parser.add_argument_group(
+        'wm/vent regressors',  'options for obtaining white matter and '
+                               'ventricle signal regressors')
+    setup.add_argument(
+        '--fmri-res', type=float, default=2.,
+        help='isotropic resolution (mm) for final fmri volume. Default is 2.'
+    )
+    setup.add_argument(
+        '--roi-res', type=float, default=2.,
+         help='isotropic resolution (mm) for vent/wm roi volumes. Default is '
+              '2.'
+    )
+    setup.add_argument(
+        '--sigma', type=float,
+        help='sigma for gaussian kernel used to erode rois prior to signal '
+             'extraction.  Default is to use roi resolution'
+    )
+    setup.add_argument(
+        '--no-aparc', action='store_true',
+        help='flag to use original freesurfer LR white matter labels instead '
+             'of parcellated labels.'
     )
     bold_filter = parser.add_argument_group(
         'bold signal filtering',  'bold signal filtering parameters.')
@@ -189,6 +215,7 @@ def generate_parser(parser=None):
              'determine motion filter parameters. Columns, start time, and '
              'frequency will also need to be specified. NOT IMPLEMENTED.'
     )
+    
 
     return parser
 
@@ -199,7 +226,8 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
               motion_filter_order=None, band_stop_min=None,
               band_stop_max=None, skip_seconds=None, brain_radius=None,
               contiguous_frames=None, setup=False, teardown=None,
-              tasklist=None, **kwargs):
+              tasklist=None, fmri_res=2., roi_res=2., no_aparc=False,
+              **kwargs):
     """
     main function with 3 modes:
         setup, task, and teardown.
@@ -252,7 +280,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                                             'Movement_Regressors.txt'),
         'output_dtseries_basename': '%s_%s_Atlas' % (task, version_name),
         'segmentation': os.path.join(output_folder, 'MNINonLinear', 'ROIs',
-                                     'wmparc.2.nii.gz')
+                                     'wmparc.%g.nii.gz' % roi_res)
     }
     input_spec.update(kwargs.get('input_spec', {}))
     output_spec = {
@@ -268,17 +296,20 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                                       'analyses_v2','timecourses'),
         'result_dir': os.path.join(output_folder, 'MNINonLinear', 'Results',
                                    task, version_name),
-        'summary_folder': os.path.join(output_folder, 'summary_%s' % version_name),
+        'summary_folder': os.path.join(output_folder, 
+                                       'summary_%s' % version_name),
         'vent_mask': os.path.join(output_folder, 'MNINonLinear',
-                                  'vent_2mm_%s_mask_eroded.nii.gz' % subject),
+                                  'vent_%gmm_%s_mask_eroded.nii.gz' % \
+                                      (fmri_res, subject)),
         'vent_mean_signal': os.path.join(output_folder, 'MNINonLinear',
                                          'Results', task, version_name,
                                          '%s_vent_mean.txt' % task),
         'wm_mask': os.path.join(output_folder, 'MNINonLinear',
-                                'wm_2mm_%s_mask_eroded.nii.gz' % subject),
-        'wm_mean_signal': os.path.join(output_folder, 'MNINonLinear', 'Results',
-                                       task, version_name, '%s_wm_mean.txt' %
-                                       task)
+                                'wm_%gmm_%s_mask_eroded.nii.gz' % \
+                                    (fmri_res, subject)),
+        'wm_mean_signal': os.path.join(output_folder, 'MNINonLinear', 
+                                       'Results', task, version_name, 
+                                       '%s_wm_mean.txt' % task)
     }
     output_spec.update(kwargs.get('output_spec', {}))
 
@@ -305,9 +336,16 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         if not os.path.exists(output_spec['summary_folder']):
             os.mkdir(output_spec['summary_folder'])
 
+        if no_aparc:
+            label_override = dict(wm_lt_R=2, wm_ut_R=2, wm_lt_L=41, 
+                                  wm_ut_L=41)
+        else:
+            label_override = {}
+
         # create white matter and ventricle masks for regression
         make_masks(input_spec['segmentation'], output_spec['wm_mask'],
-                   output_spec['vent_mask'])
+                   output_spec['vent_mask'], fmri_res=fmri_res, 
+                   roi_res=roi_res, **label_override)
 
     elif teardown:
         output_results = os.path.join(output_folder, 'MNINonLinear', 'Results')
@@ -419,9 +457,9 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
         # get ventricular and white matter signals
         mean_roi_signal(input_spec['fmri_volume'], output_spec['wm_mask'],
-                        output_spec['wm_mean_signal'])
+                        output_spec['wm_mean_signal'], fmri_res, roi_res)
         mean_roi_signal(input_spec['fmri_volume'], output_spec['vent_mask'],
-                        output_spec['vent_mean_signal'])
+                        output_spec['vent_mean_signal'], fmri_res, roi_res)
 
         # run signal processing on dtseries
         matlab_input = {
@@ -476,7 +514,7 @@ def get_repetition_time(fmri):
     return repetition_time
 
 
-def mean_roi_signal(fmri, mask, output):
+def mean_roi_signal(fmri, mask, output, fmri_res=2., roi_res=2.):
     """
     :param fmri: path to fmri nifti
     :param mask: path to mask/roi nifti
@@ -485,6 +523,12 @@ def mean_roi_signal(fmri, mask, output):
     :return: None
     """
     cmd = 'fslmeants -i {fmri} -o {output} -m {mask}'
+    if fmri_res != roi_res:
+        resamplecmd = 'flirt -interp nearestneighbour -in {mask} -ref ' \
+                      '{fmri} -applyxfm -out {mask}'
+        resamplecmd = resamplecmd.format(fmri=fmri, output=output, mask=mask,
+                                         fmri_res=fmri_res)
+        subprocess.call(resamplecmd.split())
     cmd = cmd.format(fmri=fmri, output=output, mask=mask)
     subprocess.call(cmd.split())
 
@@ -507,7 +551,8 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
     wd = os.path.dirname(wm_mask_out)
     # set parameter defaults
     defaults = dict(wm_lt_R=2950, wm_ut_R=3050, wm_lt_L=3950, wm_ut_L=4050,
-                    vent_lt_R=43, vent_ut_R=43, vent_lt_L=4, vent_ut_L=4)
+                    vent_lt_R=43, vent_ut_R=43, vent_lt_L=4, vent_ut_L=4,
+                    roi_res=2)
     # set temporary filenames
     tempfiles = {
         'wm_mask_L': os.path.join(wd, 'tmp_left_wm.nii.gz'),
@@ -528,19 +573,21 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
         'fslmaths {segmentation} -thr {wm_lt_R} -uthr {wm_ut_R} {wm_mask_R}',
         'fslmaths {segmentation} -thr {wm_lt_L} -uthr {wm_ut_L} {wm_mask_L}',
         'fslmaths {wm_mask_R} -add {wm_mask_L} -bin {wm_mask}',
-        'fslmaths {wm_mask} -kernel gauss 2 -ero {wm_mask_out}',
+        'fslmaths {wm_mask} -kernel gauss {roi_res:g} -ero {wm_mask_out}',
         'fslmaths {segmentation} -thr {vent_lt_R} -uthr {vent_ut_R} '
         '{vent_mask_R}',
         'fslmaths {segmentation} -thr {vent_lt_L} -uthr {vent_ut_L} '
         '{vent_mask_L}',
         'fslmaths {vent_mask_R} -add {vent_mask_L} -bin {vent_mask}',
-        'fslmaths {vent_mask} -kernel gauss 2 -ero {vent_mask_out}'
+        'fslmaths {vent_mask} -kernel gauss {roi_res:g} -ero {vent_mask_out}'
     ]
-    # format and run commands
+    
+    # get params
     defaults.update(kwargs)
     kwargs.update(defaults)
     kwargs.update(iofiles)
     kwargs.update(tempfiles)
+    # format and run commands
     for cmdfmt in cmdlist:
         cmd = cmdfmt.format(**kwargs)
         subprocess.call(cmd.split())
