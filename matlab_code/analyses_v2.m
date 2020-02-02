@@ -123,11 +123,12 @@ function analyses_v2(config_path)
                 filename = dtseries_files{i};
                 [~, name, ~] = fileparts(filename);
 
-                subject_outliers_parse_BIDS(path_wb_c, mat_file, dtseries, ...
+                subject_outliers_parse_BIDS(path_wb_c, mat_file, filename, ...
                     result_dir, taskname)
 
-            catch
-                disp([name 'does not exist'])
+            catch exception
+                disp([filename ':'])
+                disp(exception)
             end
         end
     end
