@@ -3,29 +3,29 @@
 __prog__ = 'DCANBOLDProc'
 __version__ = '4.0.0'
 __doc__ = \
-"""Wraps the compiled DCAN Signal Processing Matlab script, version: %s. 
+"""Wraps the compiled DCAN Signal Processing Matlab script, version: %s.
 Runs in 3 main modes:  [setup], [task], and [teardown].
 
-[setup]: creates white matter and ventricular masks for regression, must be 
+[setup]: creates white matter and ventricular masks for regression, must be
          run prior to task.
 
-[task]: computes fd numbers [1][2], runs regressions on a given task/fmri [3] 
-        and outputs a corrected dtseries, along with motion numbers in an 
+[task]: computes fd numbers [1][2], runs regressions on a given task/fmri [3]
+        and outputs a corrected dtseries, along with motion numbers in an
         hdf5 (.mat) formatted file.
 
-[teardown]: concatenates any resting state runs into a single dtseries, and 
+[teardown]: concatenates any resting state runs into a single dtseries, and
             parcellates all final tasks.""" % __version__
 __references__ = \
 """References
 ----------
 
-[1] Fair DA, Miranda-Dominguez O, et al. Correction of respiratory artifacts 
-in MRI head motion estimates. bioRxiv [Internet]. 2018 Jan 1; Available from: 
+[1] Fair DA, Miranda-Dominguez O, et al. Correction of respiratory artifacts
+in MRI head motion estimates. bioRxiv [Internet]. 2018 Jan 1; Available from:
 http://biorxiv.org/content/early/2018/06/07/337360.abstract
-[2] Power J, et al. Methods to detect, characterize, and remove motion 
-artifact in resting state fMRI. Neuroimage [Internet]. Elsevier Inc.; 2014 
+[2] Power J, et al. Methods to detect, characterize, and remove motion
+artifact in resting state fMRI. Neuroimage [Internet]. Elsevier Inc.; 2014
 Jan 1 [cited 2014 Jul 9];84:32041. doi: 10.1016/j.neuroimage.2013.08.048.
-[3] Friston KJ, et al. Movement-related effects in fMRI time-series. Magn 
+[3] Friston KJ, et al. Movement-related effects in fMRI time-series. Magn
 Reson Med [Internet]. 1996;35(3):34655. doi: 10.1016/j.neuroimage.2013.08.048
 """
 
@@ -46,6 +46,7 @@ def _cli():
     """
     parser = generate_parser()
     args = parser.parse_args()
+    print (args)
 
     kwargs = {
         'subject': args.subject,
@@ -90,7 +91,7 @@ def generate_parser(parser=None):
             formatter_class=argparse.RawDescriptionHelpFormatter
         )
     parser.add_argument(
-        '-v', '--version', action='version', 
+        '-v', '--version', action='version',
         version='%s_v%s' % (__prog__, __version__),
         help='print the software name and version'
     )
@@ -215,7 +216,7 @@ def generate_parser(parser=None):
              'determine motion filter parameters. Columns, start time, and '
              'frequency will also need to be specified. NOT IMPLEMENTED.'
     )
-    
+
 
     return parser
 
@@ -296,7 +297,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                                       'analyses_v2','timecourses'),
         'result_dir': os.path.join(output_folder, 'MNINonLinear', 'Results',
                                    task, version_name),
-        'summary_folder': os.path.join(output_folder, 
+        'summary_folder': os.path.join(output_folder,
                                        'summary_%s' % version_name),
         'vent_mask': os.path.join(output_folder, 'MNINonLinear',
                                   'vent_%gmm_%s_mask_eroded.nii.gz' % \
@@ -307,8 +308,8 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         'wm_mask': os.path.join(output_folder, 'MNINonLinear',
                                 'wm_%gmm_%s_mask_eroded.nii.gz' % \
                                     (fmri_res, subject)),
-        'wm_mean_signal': os.path.join(output_folder, 'MNINonLinear', 
-                                       'Results', task, version_name, 
+        'wm_mean_signal': os.path.join(output_folder, 'MNINonLinear',
+                                       'Results', task, version_name,
                                        '%s_wm_mean.txt' % task)
     }
     output_spec.update(kwargs.get('output_spec', {}))
@@ -337,21 +338,21 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             os.mkdir(output_spec['summary_folder'])
 
         if no_aparc:
-            label_override = dict(wm_lt_R=2, wm_ut_R=2, wm_lt_L=41, 
+            label_override = dict(wm_lt_R=2, wm_ut_R=2, wm_lt_L=41,
                                   wm_ut_L=41)
         else:
             label_override = {}
 
         # create white matter and ventricle masks for regression
         make_masks(input_spec['segmentation'], output_spec['wm_mask'],
-                   output_spec['vent_mask'], fmri_res=fmri_res, 
+                   output_spec['vent_mask'], fmri_res=fmri_res,
                    roi_res=roi_res, **label_override)
 
     elif teardown:
         output_results = os.path.join(output_folder, 'MNINonLinear', 'Results')
         alltasks = os.listdir(output_results)
-        tasknames = sorted(list(set([d[:-2] for d in alltasks 
-                                     if os.path.isdir(os.path.join(output_results,d)) 
+        tasknames = sorted(list(set([d[:-2] for d in alltasks
+                                     if os.path.isdir(os.path.join(output_results,d))
                                      and 'task-' in d])))
 
         concatlist = []
@@ -584,7 +585,7 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
         'fslmaths {vent_mask_R} -add {vent_mask_L} -bin {vent_mask}',
         'fslmaths {vent_mask} -kernel gauss {roi_res:g} -ero {vent_mask_out}'
     ]
-    
+
     # get params
     defaults.update(kwargs)
     kwargs.update(defaults)
@@ -640,7 +641,7 @@ def parcellate(concatlist, output_folder):
                                                'Results')
             output_concat_dtseries = os.path.join(base_results_folder,
                                                   '%s_%s_Atlas.dtseries.nii' %
-                                                  (taskname, version_name)) 
+                                                  (taskname, version_name))
             # parcellation
             for parcel_name, score in parcellations:
                 print("Parcellating with %s" % parcel_name)
