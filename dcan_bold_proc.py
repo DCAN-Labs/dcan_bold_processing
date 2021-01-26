@@ -35,6 +35,7 @@ import os
 import subprocess
 import shutil
 import sys
+import re
 
 here = os.path.dirname(os.path.realpath(__file__))
 
@@ -46,7 +47,6 @@ def _cli():
     """
     parser = generate_parser()
     args = parser.parse_args()
-    print (args)
 
     kwargs = {
         'subject': args.subject,
@@ -216,7 +216,7 @@ def generate_parser(parser=None):
              'determine motion filter parameters. Columns, start time, and '
              'frequency will also need to be specified. NOT IMPLEMENTED.'
     )
-
+    
 
     return parser
 
@@ -351,7 +351,9 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
     elif teardown:
         output_results = os.path.join(output_folder, 'MNINonLinear', 'Results')
         alltasks = os.listdir(output_results)
-        tasknames = sorted(list(set([d[:-2] for d in alltasks
+        expr = re.compile(r'.*(task-[^_]+).*([0-9]+).*')
+        #tasknames = sorted(list(set([d[:-2] for d in alltasks 
+        tasknames = sorted(list(set([expr.match(d).group(1) for d in alltasks
                                      if os.path.isdir(os.path.join(output_results,d))
                                      and 'task-' in d])))
 
@@ -370,7 +372,9 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
         for concat in concatlist:
             if len(concat) > 0:
-                taskset = concat[0][:-2]
+                #taskset = concat[0][:-2]
+                expr = re.compile(r'.*(task-[^_]+).*([0-9]+).*')
+                taskset = expr.match(concat[0]).group(1)
 
             print('Running analyses_v2 on %s' % taskset)
 
@@ -582,7 +586,7 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
         'fslmaths {vent_mask_R} -add {vent_mask_L} -bin {vent_mask}',
         'fslmaths {vent_mask} -kernel gauss {roi_res:g} -ero {vent_mask_out}'
     ]
-
+    
     # get params
     defaults.update(kwargs)
     kwargs.update(defaults)
@@ -602,7 +606,10 @@ def concatenate(concatlist, output_folder):
 
     for concat in concatlist:
         for i,task in enumerate(concat):
-            taskname = task[:-2]
+            #taskname = task[:-2]
+            expr = re.compile(r'.*(task-[^_]+).*([0-9]+).*')
+            taskname = expr.match(task).group(1)
+
             base_results_folder = os.path.join(output_folder, 'MNINonLinear',
                                           'Results')
             input_task_dtseries = os.path.join(base_results_folder, task,
