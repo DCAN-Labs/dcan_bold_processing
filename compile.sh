@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-# compiles all 
+# compiles all
 
 function usage() {
    echo "usage: `basename $0` <Matlab Compiler>"
