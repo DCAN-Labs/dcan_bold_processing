@@ -145,9 +145,9 @@ system(['rm -f ' cifti_resid_txt_path]);
 ix_ol = find(th==0); % find index movers > fd_th
 ix_in = find(th==1); % find index low motion number
 
-if ix_in <= 10
+if numel(ix_in) <= 10
     int_method = 'none';
-    err_msg = ['WARNING: There are only ', num2str(ix_in), ...
+    err_msg = ['WARNING: There are only ', num2str(numel(ix_in)), ...
         ' frames below the fd threshold of ', ...
         num2str(fd_th), '. Skipping interpolation.'];
     disp(err_msg)
