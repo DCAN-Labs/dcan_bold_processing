@@ -46,7 +46,6 @@ def _cli():
     """
     parser = generate_parser()
     args = parser.parse_args()
-    print (args)
 
     kwargs = {
         'subject': args.subject,
