@@ -472,12 +472,12 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             print("Make actual tsv file of filtered movement regressors: %s " % (filtered_tsv))
             with open(filtered_tsv, 'w') as outfile:
                 # Write the header.
-                outfile.write('X\tY\tZ\tRotX\tRotY\tRotZ\tXDt\tYDt\tZDt\tRotXDt\tRotYDt\tRotZDt')
+                outfile.write('X\tY\tZ\tRotX\tRotY\tRotZ\tXDt\tYDt\tZDt\tRotXDt\tRotYDt\tRotZDt\n')
                 # Copy the txt file, replacing spaces with tabs.
                 with open(filtered_orig) as infile:
                     for line in infile:
-                        line.replace(' ', '\t')
-                        outfile.write(line)
+                        tabsline = line.replace(' ', '\t')
+                        outfile.write(tabsline + '\n')
 
         # get ventricular and white matter signals
         mean_roi_signal(input_spec['fmri_volume'], output_spec['wm_mask'],
@@ -530,12 +530,15 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         print("Make actual tsv file of unfiltered movement regressors: %s " % (unfiltered_tsv))
         with open(unfiltered_tsv, 'w') as outfile:
             # Write the header.
-            outfile.write('X\tY\tZ\tRotX\tRotY\tRotZ\tXDt\tYDt\tZDt\tRotXDt\tRotYDt\tRotZDt')
+            outfile.write('X\tY\tZ\tRotX\tRotY\tRotZ\tXDt\tYDt\tZDt\tRotXDt\tRotYDt\tRotZDt\n')
             # Copy the txt file, replacing spaces with tabs.
             with open(unfiltered_orig) as infile:
                 for line in infile:
-                    line.replace(' ', '\t')
-                    outfile.write(line)
+                    tabsline.replace(' ', '\t')
+                    outfile.write(tabsline + '\n')
+
+        # The end.
+        print('Fini')
 
 def get_repetition_time(fmri):
     """
