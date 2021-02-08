@@ -469,7 +469,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             filtered_root, filtered_ext = os.path.splitext(filtered_movement_regressors)
             filtered_orig = os.path.abspath(filtered_movement_regressors)
             filtered_tsv = os.path.abspath(filtered_root + '.tsv')
-            print("Make actual tsv file of filtered movement regressors: %s " % (filtered_tsv))
+            print("Make tsv file of filtered movement regressors: %s " % (filtered_tsv))
             with open(filtered_tsv, 'w') as outfile:
                 # Write the header.
                 outfile.write('X\tY\tZ\tRotX\tRotY\tRotZ\tXDt\tYDt\tZDt\tRotXDt\tRotYDt\tRotZDt\n')
@@ -527,7 +527,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             f.write('%d' % frame_count)
 
         # Make tsv file (with tabs and headers) of unfiltered movement regressors.
-        print("Make actual tsv file of unfiltered movement regressors: %s " % (unfiltered_tsv))
+        print("Make tsv file of unfiltered movement regressors: %s " % (unfiltered_tsv))
         with open(unfiltered_tsv, 'w') as outfile:
             # Write the header.
             outfile.write('X\tY\tZ\tRotX\tRotY\tRotZ\tXDt\tYDt\tZDt\tRotXDt\tRotYDt\tRotZDt\n')
