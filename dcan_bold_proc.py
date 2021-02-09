@@ -477,7 +477,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 with open(filtered_orig) as infile:
                     for line in infile:
                         tabsline = line.replace(' ', '\t')
-                        outfile.write(tabsline + '\n')
+                        outfile.write(tabsline)
 
         # get ventricular and white matter signals
         mean_roi_signal(input_spec['fmri_volume'], output_spec['wm_mask'],
@@ -535,7 +535,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             with open(unfiltered_orig) as infile:
                 for line in infile:
                     tabsline.replace(' ', '\t')
-                    outfile.write(tabsline + '\n')
+                    outfile.write(tabsline)
 
         # The end.
         print('Fini')
