@@ -216,7 +216,7 @@ def generate_parser(parser=None):
              'determine motion filter parameters. Columns, start time, and '
              'frequency will also need to be specified. NOT IMPLEMENTED.'
     )
-    
+
 
     return parser
 
@@ -352,7 +352,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         output_results = os.path.join(output_folder, 'MNINonLinear', 'Results')
         alltasks = os.listdir(output_results)
         expr = re.compile(r'.*(task-[^_]+).*([0-9]+).*')
-        #tasknames = sorted(list(set([d[:-2] for d in alltasks 
+        #tasknames = sorted(list(set([d[:-2] for d in alltasks
         tasknames = sorted(list(set([expr.match(d).group(1) for d in alltasks
                                      if os.path.isdir(os.path.join(output_results,d))
                                      and 'task-' in d])))
@@ -438,6 +438,11 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         if not os.path.exists(output_spec['result_dir']):
             os.mkdir(output_spec['result_dir'])
 
+        # Save paths to unfiltered movement_regressors.
+        unfiltered_root, unfiltered_ext = os.path.splitext(input_spec['movement_regressors'])
+        unfiltered_orig = os.path.abspath(input_spec['movement_regressors'])
+        unfiltered_tsv = os.path.abspath(unfiltered_root + '.tsv')
+
         # filter motion regressors if a bandstop filter is specified
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
         if band_stop_min or band_stop_max:
@@ -459,6 +464,20 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             subprocess.call(cmd)
             # update input movement regressors
             input_spec['movement_regressors'] = filtered_movement_regressors
+
+            # Make tsv file (with tabs and headers) of filtered movement regressors.
+            filtered_root, filtered_ext = os.path.splitext(filtered_movement_regressors)
+            filtered_orig = os.path.abspath(filtered_movement_regressors)
+            filtered_tsv = os.path.abspath(filtered_root + '.tsv')
+            print("Make tsv file of filtered movement regressors: %s " % (filtered_tsv))
+            with open(filtered_tsv, 'w') as outfile:
+                # Write the header.
+                outfile.write('X\tY\tZ\tRotX\tRotY\tRotZ\tXDt\tYDt\tZDt\tRotXDt\tRotYDt\tRotZDt\n')
+                # Copy the txt file, replacing spaces with tabs.
+                with open(filtered_orig) as infile:
+                    for line in infile:
+                        tabsline = line.replace(' ', '\t')
+                        outfile.write(tabsline)
 
         # get ventricular and white matter signals
         mean_roi_signal(input_spec['fmri_volume'], output_spec['wm_mask'],
@@ -506,6 +525,20 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
         with open(frames_file,'w') as f:
             f.write('%d' % frame_count)
+
+        # Make tsv file (with tabs and headers) of unfiltered movement regressors.
+        print("Make tsv file of unfiltered movement regressors: %s " % (unfiltered_tsv))
+        with open(unfiltered_tsv, 'w') as outfile:
+            # Write the header.
+            outfile.write('X\tY\tZ\tRotX\tRotY\tRotZ\tXDt\tYDt\tZDt\tRotXDt\tRotYDt\tRotZDt\n')
+            # Copy the txt file, replacing spaces with tabs.
+            with open(unfiltered_orig) as infile:
+                for line in infile:
+                    tabsline.replace(' ', '\t')
+                    outfile.write(tabsline)
+
+        # The end.
+        print('Fini')
 
 def get_repetition_time(fmri):
     """
@@ -586,7 +619,7 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
         'fslmaths {vent_mask_R} -add {vent_mask_L} -bin {vent_mask}',
         'fslmaths {vent_mask} -kernel gauss {roi_res:g} -ero {vent_mask_out}'
     ]
-    
+
     # get params
     defaults.update(kwargs)
     kwargs.update(defaults)
