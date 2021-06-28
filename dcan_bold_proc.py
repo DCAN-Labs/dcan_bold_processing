@@ -24,9 +24,9 @@ in MRI head motion estimates. bioRxiv [Internet]. 2018 Jan 1; Available from:
 http://biorxiv.org/content/early/2018/06/07/337360.abstract
 [2] Power J, et al. Methods to detect, characterize, and remove motion
 artifact in resting state fMRI. Neuroimage [Internet]. Elsevier Inc.; 2014
-Jan 1 [cited 2014 Jul 9];84:32041. doi: 10.1016/j.neuroimage.2013.08.048.
+Jan 1 [cited 2014 Jul 9];84:32041. doi: 10.1016/j.neuroimage.2013.08.048
 [3] Friston KJ, et al. Movement-related effects in fMRI time-series. Magn
-Reson Med [Internet]. 1996;35(3):34655. doi: 10.1016/j.neuroimage.2013.08.048
+Reson Med [Internet]. 1996;35(3):34655. doi: 10.1002/mrm.1910350312
 """
 
 import argparse
