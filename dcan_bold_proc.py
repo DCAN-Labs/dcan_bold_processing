@@ -351,7 +351,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
     elif teardown:
         output_results = os.path.join(output_folder, 'MNINonLinear', 'Results')
         alltasks = os.listdir(output_results)
-        expr = re.compile(r'.*(task-[^_]+).*([0-9]+).*')
+        expr = re.compile(r'.*(task-[^0-9]+)([0-9]*[^_]).*')
         #tasknames = sorted(list(set([d[:-2] for d in alltasks
         tasknames = sorted(list(set([expr.match(d).group(1) for d in alltasks
                                      if os.path.isdir(os.path.join(output_results,d))
