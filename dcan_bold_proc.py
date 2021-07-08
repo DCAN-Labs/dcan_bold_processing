@@ -373,7 +373,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         for concat in concatlist:
             if len(concat) > 0:
                 #taskset = concat[0][:-2]
-                expr = re.compile(r'.*(task-[^_]+).*([0-9]+).*')
+                expr = re.compile(r'.*(task-[^0-9]+)([0-9]*[^_]).*')
                 taskset = expr.match(concat[0]).group(1)
 
             print('Running analyses_v2 on %s' % taskset)
@@ -640,7 +640,7 @@ def concatenate(concatlist, output_folder):
     for concat in concatlist:
         for i,task in enumerate(concat):
             #taskname = task[:-2]
-            expr = re.compile(r'.*(task-[^_]+).*([0-9]+).*')
+            expr = re.compile(r'.*(task-[^0-9]+)([0-9]*[^_]).*')
             taskname = expr.match(task).group(1)
 
             base_results_folder = os.path.join(output_folder, 'MNINonLinear',
