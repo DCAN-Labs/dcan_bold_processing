@@ -351,7 +351,10 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
     elif teardown:
         output_results = os.path.join(output_folder, 'MNINonLinear', 'Results')
         alltasks = os.listdir(output_results)
-        expr = re.compile(r'.*(task-[^0-9]+)([0-9]*[^_]).*')
+        # this regex is more permissive than BIDS (which requires task labels be alphanumeric)
+        # but is intended to be consistent with the task label extraction in helpers.py
+        # of the HCP-based DCAN pipelines
+        expr = re.compile(r'.*(task-[^_]+).*')
         #tasknames = sorted(list(set([d[:-2] for d in alltasks
         tasknames = sorted(list(set([expr.match(d).group(1) for d in alltasks
                                      if os.path.isdir(os.path.join(output_results,d))
@@ -372,10 +375,19 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
         for concat in concatlist:
             if len(concat) > 0:
+                c = concat[0]
                 #taskset = concat[0][:-2]
-                expr = re.compile(r'.*(task-[^0-9]+)([0-9]*[^_]).*')
-                taskset = expr.match(concat[0]).group(1)
+                expr = re.compile(r'.*(ses-(?!None)[^_]+_).*')
+                session = expr.match(c)
 
+                expr = re.compile(r'.*(task-[^_]+).*')
+                tasklabel = expr.match(c)
+
+                if session:
+                    taskset = session.group(1) + tasklabel.group(1)
+                else:
+                    taskset = tasklabel.group(1)
+                           
             print('Running analyses_v2 on %s' % taskset)
 
             analysis_folder = os.path.join(output_folder, version_name,
@@ -534,7 +546,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             # Copy the txt file, replacing spaces with tabs.
             with open(unfiltered_orig) as infile:
                 for line in infile:
-                    tabsline.replace(' ', '\t')
+                    tabsline = line.replace(' ', '\t')
                     outfile.write(tabsline)
 
         # The end.
@@ -640,8 +652,19 @@ def concatenate(concatlist, output_folder):
     for concat in concatlist:
         for i,task in enumerate(concat):
             #taskname = task[:-2]
-            expr = re.compile(r'.*(task-[^0-9]+)([0-9]*[^_]).*')
-            taskname = expr.match(task).group(1)
+        # this regex is more permissive than BIDS (which requires ses/task labels be alphanumeric)
+        # but is intended to be consistent with the task label extraction in helpers.py
+        # of the HCP-based DCAN pipelines
+            expr = re.compile(r'.*(ses-(?!None)[^_]+_).*')
+            session = expr.match(task)
+
+            expr = re.compile(r'.*(task-[^_]+).*')
+            tasklabel = expr.match(task)
+
+            if session:
+                taskname = session.group(1) + tasklabel.group(1)
+            else:
+                taskname = tasklabel.group(1)   
 
             base_results_folder = os.path.join(output_folder, 'MNINonLinear',
                                           'Results')
@@ -672,7 +695,21 @@ def parcellate(concatlist, output_folder):
 
     for concat in concatlist:
         if len(concat) > 0:
-            taskname = concat[0][:-2]
+            #taskname = concat[0][:-2]
+        # this regex is more permissive than BIDS (which requires ses/task labels be alphanumeric)
+        # but is intended to be consistent with the task label extraction in helpers.py
+        # of the HCP-based DCAN pipelines
+            c = concat[0]
+            expr = re.compile(r'.*(ses-(?!None)[^_]+_).*')
+            session = expr.match(c)
+
+            expr = re.compile(r'.*(task-[^_]+).*')
+            tasklabel = expr.match(c)
+
+            if session:
+                taskname = session.group(1) + tasklabel.group(1)
+            else:
+                taskname = tasklabel.group(1)
 
             base_results_folder = os.path.join(output_folder, 'MNINonLinear',
                                                'Results')
@@ -703,13 +740,13 @@ def parcellate(concatlist, output_folder):
                 # score of 1 is cortical, 2 is subcortical, and 3 is both
                 if score in (1, 3):
                     cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
-                           '-cifti-parcellate', output_concat_dtseries,
+                           '-cifti-parcellate', '-legacy-mode', output_concat_dtseries,
                            parcels, 'COLUMN', output_parcellation]
                     print(cmd)
                     subprocess.call(cmd)
                 if score in (2, 3):
                     cmd = ['%s/wb_command' % os.environ['CARET7DIR'],
-                            '-cifti-parcellate', output_concat_dtseries,
+                            '-cifti-parcellate', '-legacy-mode', output_concat_dtseries,
                             subcorticals, 'COLUMN', output_subcorticals]
                     print(cmd)
                     subprocess.call(cmd)
