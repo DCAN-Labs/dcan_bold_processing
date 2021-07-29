@@ -9,7 +9,7 @@ if nn==1 %% if nruns == 1 (i.e. run index may not be present for this task)
          %% assign a default index of 1
     ix_ls(1)=1
     
-else // get run indexes for this task
+else %% get run indexes for this task
     for ii=1:nn
         %% TM 20210728 note: regex now supports both current and old versions
         %% of get_fmriname function in helpers.py of DCAN pipeline BIDS-Apps,
