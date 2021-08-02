@@ -52,6 +52,7 @@ def _cli():
         'subject': args.subject,
         'task': args.task,
         'output_folder': args.output_folder,
+        'legacy_tasknames': args.legacy_tasknames,
         'fd_threshold': args.fd_threshold,
         'contiguous_frames': args.contiguous_frames,
         'filter_order': args.filter_order,
@@ -112,6 +113,13 @@ def generate_parser(parser=None):
         '--output-folder',
         help='output folder which contains all files produced by the dcan '
              'fmri-pipeline.  Used for setting up standard inputs and outputs'
+    )
+    parser.add_argument(
+        '--legacy-tasknames', action='store_true',
+        help='parse input task names as done in dcan_bold_processing <= 4.0.4. '
+             'use this flag if the input task filenames use the older DCAN HCP '
+             'pipeline filename convention in which run index is appended to '
+             'task name, e.g. task-myTask01 instead of task-myTask_run-01. '
     )
     setup =  parser.add_argument_group(
         'wm/vent regressors',  'options for obtaining white matter and '
@@ -246,6 +254,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
     :param subject: subject id
     :param output_folder: base output files folder for fmri pipeline
+    :param legacy_tasknames: support legacy tasknames with run index appended to task, e.g. "task-rest01")
     :param task: name of task
     :param fd_threshold: threshold for use in signal regression
     :param filter_order: order of bold signal bandpass filter
@@ -351,15 +360,19 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
     elif teardown:
         output_results = os.path.join(output_folder, 'MNINonLinear', 'Results')
         alltasks = os.listdir(output_results)
-        # this regex is more permissive than BIDS (which requires task labels be alphanumeric)
-        # but is intended to be consistent with the task label extraction in helpers.py
-        # of the HCP-based DCAN pipelines
-        expr = re.compile(r'.*(task-[^_]+).*')
-        #tasknames = sorted(list(set([d[:-2] for d in alltasks
-        tasknames = sorted(list(set([expr.match(d).group(1) for d in alltasks
+
+        if legacy_tasknames:
+            tasknames = sorted(list(set([d[:-2] for d in alltasks
                                      if os.path.isdir(os.path.join(output_results,d))
                                      and 'task-' in d])))
-
+        else:
+            # this regex is more permissive than BIDS (which requires task labels be alphanumeric)
+            # but is intended to be consistent with the task label extraction in helpers.py
+            # of the DCAN BIDS pipelines
+            expr = re.compile(r'.*(task-[^_]+).*')
+            tasknames = sorted(list(set([expr.match(d).group(1) for d in alltasks
+                                         if os.path.isdir(os.path.join(output_results,d))
+                                         and 'task-' in d])))
         concatlist = []
         for commalist in tasklist:
             for bids_task in tasknames:
@@ -376,17 +389,19 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         for concat in concatlist:
             if len(concat) > 0:
                 c = concat[0]
-                #taskset = concat[0][:-2]
-                expr = re.compile(r'.*(ses-(?!None)[^_]+_).*')
-                session = expr.match(c)
-
-                expr = re.compile(r'.*(task-[^_]+).*')
-                tasklabel = expr.match(c)
-
-                if session:
-                    taskset = session.group(1) + tasklabel.group(1)
+                if legacy_tasknames:
+                    taskset = concat[0][:-2]
                 else:
-                    taskset = tasklabel.group(1)
+                    expr = re.compile(r'.*(ses-(?!None)[^_]+_).*')
+                    session = expr.match(c)
+
+                    expr = re.compile(r'.*(task-[^_]+).*')
+                    tasklabel = expr.match(c)
+
+                    if session:
+                        taskset = session.group(1) + tasklabel.group(1)
+                    else:
+                        taskset = tasklabel.group(1)
                            
             print('Running analyses_v2 on %s' % taskset)
 
@@ -651,20 +666,22 @@ def concatenate(concatlist, output_folder):
 
     for concat in concatlist:
         for i,task in enumerate(concat):
-            #taskname = task[:-2]
-        # this regex is more permissive than BIDS (which requires ses/task labels be alphanumeric)
-        # but is intended to be consistent with the task label extraction in helpers.py
-        # of the HCP-based DCAN pipelines
-            expr = re.compile(r'.*(ses-(?!None)[^_]+_).*')
-            session = expr.match(task)
-
-            expr = re.compile(r'.*(task-[^_]+).*')
-            tasklabel = expr.match(task)
-
-            if session:
-                taskname = session.group(1) + tasklabel.group(1)
+            if legacy_tasknames:
+                taskname = task[:-2]
             else:
-                taskname = tasklabel.group(1)   
+            # this regex is more permissive than BIDS (which requires ses/task labels be alphanumeric)
+            # but is intended to be consistent with the task label extraction in helpers.py
+            # of the HCP-based DCAN pipelines
+                expr = re.compile(r'.*(ses-(?!None)[^_]+_).*')
+                session = expr.match(task)
+
+                expr = re.compile(r'.*(task-[^_]+).*')
+                tasklabel = expr.match(task)
+
+                if session:
+                    taskname = session.group(1) + tasklabel.group(1)
+                else:
+                    taskname = tasklabel.group(1)   
 
             base_results_folder = os.path.join(output_folder, 'MNINonLinear',
                                           'Results')
@@ -695,21 +712,23 @@ def parcellate(concatlist, output_folder):
 
     for concat in concatlist:
         if len(concat) > 0:
-            #taskname = concat[0][:-2]
-        # this regex is more permissive than BIDS (which requires ses/task labels be alphanumeric)
-        # but is intended to be consistent with the task label extraction in helpers.py
-        # of the HCP-based DCAN pipelines
-            c = concat[0]
-            expr = re.compile(r'.*(ses-(?!None)[^_]+_).*')
-            session = expr.match(c)
-
-            expr = re.compile(r'.*(task-[^_]+).*')
-            tasklabel = expr.match(c)
-
-            if session:
-                taskname = session.group(1) + tasklabel.group(1)
+            if legacy_tasknames:
+                taskname = concat[0][:-2]
             else:
-                taskname = tasklabel.group(1)
+            # this regex is more permissive than BIDS (which requires ses/task labels be alphanumeric)
+            # but is intended to be consistent with the task label extraction in helpers.py
+            # of the HCP-based DCAN pipelines
+                c = concat[0]
+                expr = re.compile(r'.*(ses-(?!None)[^_]+_).*')
+                session = expr.match(c)
+
+                expr = re.compile(r'.*(task-[^_]+).*')
+                tasklabel = expr.match(c)
+
+                if session:
+                    taskname = session.group(1) + tasklabel.group(1)
+                else:
+                    taskname = tasklabel.group(1)
 
             base_results_folder = os.path.join(output_folder, 'MNINonLinear',
                                                'Results')
