@@ -17,16 +17,15 @@ else %% get run indexes for this task
         %% "ses-mySes_task-myTask01" will both work
 
         %% Addresses Github issue #5 (regex match failure due to "desc-preproc"
-        %% suffix added by fMRIPrep); also the edge case of using a pipeline 
-        %% with the old get_fmriname and a BIDS task label ending in digits         
+        %% suffix added by fMRIPrep)       
 
         filename=[path_contents(ii).folder filesep path_contents(ii).name];
-        tokens=regexp(filename,[taskname '(_run-)?([0-9]{2,}).*'],'tokens');
-        ix_ls(ii)=str2num(tokens{1,1}{1,2}(end-1:end))
+        tokens=regexp(filename,[taskname '(_run-)?([0-9]+).*'],'tokens');
+        ix_ls(ii)=str2num(tokens{1,1}{1,2})
     end
 end
 
-[cc, ix]=sort(ix_ls);
+[cc, ix]=sort(ix_ls); %% sort on run index
 
 for ii=1:nn
     path_contents(ix(ii)).folder;
