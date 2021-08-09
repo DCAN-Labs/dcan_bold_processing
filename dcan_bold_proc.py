@@ -381,8 +381,8 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                                        if os.path.isdir(os.path.join(output_results,d))
                                        and bids_task in d ])
 
-        concatenate(concatlist, output_folder)
-        parcellate(concatlist, output_folder)
+        concatenate(concatlist, output_folder, legacy_tasknames)
+        parcellate(concatlist, output_folder, legacy_tasknames)
 
         # setup inputs, then run analyses_v2
         repetition_time = get_repetition_time(input_spec['fmri_volume'])
@@ -661,7 +661,7 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
         os.remove(tempfiles[key])
 
 
-def concatenate(concatlist, output_folder):
+def concatenate(concatlist, output_folder, legacy_tasknames):
     version_name = '%s_v%s' % (__prog__, __version__)
 
     for concat in concatlist:
@@ -704,7 +704,7 @@ def concatenate(concatlist, output_folder):
                        input_task_dtseries]
                 subprocess.call(cmd)
 
-def parcellate(concatlist, output_folder):
+def parcellate(concatlist, output_folder, legacy_tasknames):
     version_name = '%s_v%s' % (__prog__, __version__)
 
     parcellation_folder = os.path.join(here, 'templates', 'parcellations')
