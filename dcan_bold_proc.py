@@ -236,7 +236,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
               band_stop_max=None, skip_seconds=None, brain_radius=None,
               contiguous_frames=None, setup=False, teardown=None,
               tasklist=None, fmri_res=2., roi_res=2., no_aparc=False,
-              **kwargs):
+              legacy_tasknames=False, **kwargs):
     """
     main function with 3 modes:
         setup, task, and teardown.
