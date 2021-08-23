@@ -8,7 +8,7 @@ forked from FNL\_preproc and is meant to take its place.
 This code repository consists of python wrappers and matlab scripts
 for signal processing of the bold signal extracted from fMRI data.
 This program is designed for the explicit output data of the HCP
-fMRI pipeline or its DCAN derivative. It is not designed with other 
+fMRI pipeline or its DCAN derivatives. It is not designed with other 
 preprocessed data in mind, so use at your own peril.
 
 
@@ -33,6 +33,7 @@ main wrapper for signal processing scripts.
 
 usage: dcan_bold_proc.py [-h] [-v] [--setup] --subject SUBJECT --task TASK
                          [--output-folder OUTPUT_FOLDER]
+                         [--legacy-tasknames]
                          [--filter-order FILTER_ORDER] [--lower-bpf LOWER_BPF]
                          [--upper-bpf UPPER_BPF] [--fd-threshold FD_THRESHOLD]
                          [--skip-seconds SKIP_SECONDS]
@@ -70,6 +71,11 @@ optional arguments:
                         output folder which contains all files produced by the
                         dcan fmri-pipeline. Used for setting up standard
                         inputs and outputs
+  --legacy-tasknames
+                        parse input task names as done in dcan_bold_processing <= 4.0.4.
+                        use this flag if the input task filenames use the older DCAN HCP 
+                        pipeline filename convention in which run index is appended to 
+                        task name, e.g. task-myTask01 instead of task-myTask_run-01. 
 
 bold signal filtering:
   bold signal filtering parameters.
