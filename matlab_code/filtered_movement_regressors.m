@@ -59,7 +59,8 @@ switch filt_type
 
         W_notch = fa / fNy;
         Wn = mean(W_notch);
-        bw = diff(W_notch);
+        Wd = diff(W_notch);
+        bw = abs(Wd); % take the absolute value in order to ensure that the difference between the min and max is not negative
         [b_filt, a_filt] = iirnotch(Wn, bw);
         num_f_apply = floor(order / 2); % if order<4 apply filter 1x, if order=4 2x, if order=6 3x
 
