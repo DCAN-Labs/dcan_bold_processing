@@ -1,7 +1,6 @@
 mccExcludedFiles.log
 readme.txt
 requiredMCRProducts.txt
-bin/
 templates/parcellations/
 *.asv
 *.nii
