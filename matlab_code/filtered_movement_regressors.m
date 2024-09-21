@@ -1,4 +1,4 @@
-function filtered_movement_regressors(path_mov_reg, TR, filt_option, order, LP_freq_min, filt_type, fc_RR_min, fc_RR_max, output)
+function filtered_movement_regressors(path_mov_reg, TR, filt_option, order, LP_freq_min, filt_type, fc_RR_min, fc_RR_max, brain_radius, output)
 %% This function applies a low pas filter to the motion numbers and save it with a different number
 
 % %% Input arguments
@@ -8,7 +8,8 @@ function filtered_movement_regressors(path_mov_reg, TR, filt_option, order, LP_f
 % order               order of the filter to be applied
 % LP_freq_min         Low pass frequency (in minutes) to be filtered
 %% defaults
-head_ratio_cm = 5;
+% head_ratio_cm = 5;
+
 
 %% when compiling comment out paths and uncomment this section
 TR = str2num(TR);
@@ -17,6 +18,7 @@ order = str2num(order);
 LP_freq_min = str2num(LP_freq_min);
 fc_RR_min = str2num(fc_RR_min);
 fc_RR_max = str2num(fc_RR_max);
+head_ratio_cm = str2num(brain_radius) * 0.1;
 
 %% filter design
 
@@ -83,7 +85,7 @@ for i=1:n
     % Read motion numbers
     file_mov_reg = [path_contents(i).folder filesep path_contents(i).name]; %-- for MATLAB USE
     MR = dlmread(file_mov_reg);
-    MR_ld=make_friston_regressors(MR);%% Using this function to only get the linear displacements
+    MR_ld=make_friston_regressors(MR, head_ratio_cm);%% Using this function to only get the linear displacements
     MR_ld=MR_ld(:,1:6);
     
     switch filt_option
