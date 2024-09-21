@@ -27,6 +27,8 @@ file_mov_reg= conf_json.file_mov_reg;
 motion_filename= conf_json.motion_filename;
 skip_seconds= conf_json.skip_seconds;
 result_dir= conf_json.result_dir;
+brain_radius_in_mm = conf_json.brain_radius_in_mm
+brain_radius_in_cm= brain_radius_in_mm * 0.1;
 int_method= 'linear';
 %silence warnings
 warning('off', 'all')
@@ -64,14 +66,14 @@ fclose(fileid);
 %% read mov_reg and calculate Friston regressors
 MR = dlmread(file_mov_reg);
 MR = MR(:, [1 2 3 4 5 6]);
-FR = make_friston_regressors(MR);
+FR = make_friston_regressors(MR, brain_radius_in_cm);
 
 %% Calculate residuals (regression)
 [r, c] = size(X');
 Rr = zeros(r,c);
 
 %% Create FD.mat
-FD = calc_FD_HCP(file_mov_reg);
+FD = calc_FD_HCP(file_mov_reg, brain_radius_in_mm);
 save([result_dir filesep 'FD.mat'], 'FD', '-v7')
 txt_FD_file=[path_ex_sum filesep 'FD_' fMRIName '.txt'];
 save(txt_FD_file, 'FD','-ascii')
