@@ -1,4 +1,4 @@
-function filtered_movement_regressors(path_mov_reg, TR, filt_option, order, LP_freq_min, filt_type, fc_RR_min, fc_RR_max, brain_radius, output)
+function filtered_movement_regressors(path_mov_reg, TR, filt_option, order, LP_freq_min, filt_type, fc_RR_min, fc_RR_max, brain_radius, output, output_mm)
 %% This function applies a low pas filter to the motion numbers and save it with a different number
 
 % %% Input arguments
@@ -63,7 +63,8 @@ switch filt_type
         Wn = mean(W_notch);
         Wd = diff(W_notch);
         bw = abs(Wd); % take the absolute value in order to ensure that the difference between the min and max is not negative
-        [b_filt, a_filt] = iirnotch(Wn, bw);
+        % [b_filt, a_filt] = iirnotch(Wn, bw);
+        [b_filt,a_filt] = designNotchPeakIIR(CenterFrequency=Wn,Bandwidth=bw,Response="notch");
         num_f_apply = floor(order / 2); % if order<4 apply filter 1x, if order=4 2x, if order=6 3x
 
 end
@@ -132,6 +133,9 @@ for i=1:n
     %% The last 6 movement regressors are derivatives of the first 6. Needed for task fMRI, but not used in the Fair Lab
     second_derivs=cat(1, [0 0 0 0 0 0], diff(MR_backed(:,1:6)));
     MR_backed = [MR_backed second_derivs];
+
+    % [path_orig, file_orig, ext_orig] = fileparts(file_mov_reg);
+    dlmwrite(output_mm, MR_filt, ' ');
    
     % [path_orig, file_orig, ext_orig] = fileparts(file_mov_reg);
     dlmwrite(output, MR_backed, ' ');

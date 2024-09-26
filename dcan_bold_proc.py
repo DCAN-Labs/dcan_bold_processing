@@ -480,13 +480,18 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 '%s_bs%s_%s_filtered_%s' % (version_name, band_stop_min,
                                             band_stop_max, movreg_basename)
                 )
+            filtered_movement_regressors_mm = os.path.join(
+                output_spec['result_dir'],
+                '%s_bs%s_%s_filtered_mm_%s' % (version_name, band_stop_min,
+                                            band_stop_max, movreg_basename)
+                )
             executable = os.path.join(
                 here, 'bin', 'run_filtered_movement_regressors.sh')
             cmd = [executable, os.environ['MCRROOT'],
                    input_spec['movement_regressors'], str(repetition_time),
                    str(motion_filter_option), str(motion_filter_order),
                    str(band_stop_min), motion_filter_type, str(band_stop_min),
-                   str(band_stop_max), str(brain_radius), filtered_movement_regressors]
+                   str(band_stop_max), str(brain_radius), filtered_movement_regressors, filtered_movement_regressors_mm]
 
             subprocess.call(cmd)
             # update input movement regressors
@@ -495,6 +500,20 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             # Make tsv file (with tabs and headers) of filtered movement regressors.
             filtered_root, filtered_ext = os.path.splitext(filtered_movement_regressors)
             filtered_orig = os.path.abspath(filtered_movement_regressors)
+            filtered_tsv = os.path.abspath(filtered_root + '.tsv')
+            print("Make tsv file of filtered movement regressors: %s " % (filtered_tsv))
+            with open(filtered_tsv, 'w') as outfile:
+                # Write the header.
+                outfile.write('X\tY\tZ\tRotX\tRotY\tRotZ\tXDt\tYDt\tZDt\tRotXDt\tRotYDt\tRotZDt\n')
+                # Copy the txt file, replacing spaces with tabs.
+                with open(filtered_orig) as infile:
+                    for line in infile:
+                        tabsline = line.replace(' ', '\t')
+                        outfile.write(tabsline)
+
+            # Make tsv file (with tabs and headers) of filtered movement regressors.
+            filtered_root, filtered_ext = os.path.splitext(filtered_movement_regressors_mm)
+            filtered_orig = os.path.abspath(filtered_movement_regressors_mm)
             filtered_tsv = os.path.abspath(filtered_root + '.tsv')
             print("Make tsv file of filtered movement regressors: %s " % (filtered_tsv))
             with open(filtered_tsv, 'w') as outfile:
