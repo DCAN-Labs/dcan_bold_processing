@@ -6,3 +6,4 @@ templates/parcellations/
 *.nii
 *.mat
 ._*
+*backup*
