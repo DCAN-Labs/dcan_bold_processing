@@ -448,9 +448,6 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
     # This is the case that loops over tasks
     else:
-        # os.environ['CARET7DIR'] = '/usr/local/bin/wb_command' # temporarily adding it Tu 2024.09.12
-        # os.environ['MCRROOT'] = '/usr/local/pkg/MATLAB/R2020b/toolbox/compiler/deploy' # temporarily adding it Tu 2024.09.12
-        print(output_spec['vent_mask'])
         assert os.path.exists(output_spec['vent_mask']), \
             'must run this script with --setup flag prior to running ' \
             'individual tasks.'
@@ -649,6 +646,7 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
         'fslmaths {vent_mask_R} -add {vent_mask_L} -bin {vent_mask}',
         'fslmaths {vent_mask} -kernel gauss {roi_res:g} -ero {vent_mask_out}'
     ]
+
     # get params
     defaults.update(kwargs)
     kwargs.update(defaults)

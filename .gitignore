@@ -6,4 +6,6 @@ templates/parcellations/
 *.nii
 *.mat
 ._*
-*backup*
+./*backup*
+./test*
+__pycache__/*
