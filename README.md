@@ -1,5 +1,9 @@
 # dcan signal processing
 
+*This repository has been replaced by https://github.com/PennLINC/xcp_d. 
+It's recommended that this outdated version should not be used.
+It had some old minor issues with the FD calculation which was fixed but still had unnecessary interface to MATLAB binaries with poorly written/commented MATLAB code (Signal Processing Toolbox and potentially other Toolbox required if not using the compield bianry) and very inefficiently reading and writing data using Connectome Workbench. Not very user friendly.* 
+
 \*\*
 This is a repository for the dcan labs bold signal processing. It is 
 forked from FNL\_preproc and is meant to take its place.
