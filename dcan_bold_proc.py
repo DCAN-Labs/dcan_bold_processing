@@ -486,7 +486,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                    input_spec['movement_regressors'], str(repetition_time),
                    str(motion_filter_option), str(motion_filter_order),
                    str(band_stop_min), motion_filter_type, str(band_stop_min),
-                   str(band_stop_max), filtered_movement_regressors]
+                   str(band_stop_max), str(brain_radius), filtered_movement_regressors]
 
             subprocess.call(cmd)
             # update input movement regressors
@@ -530,6 +530,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             'motion_filename': os.path.basename(
                 output_spec['output_motion_numbers']),
             'skip_seconds': skip_seconds,
+            'brain_radius_in_mm': brain_radius,
             'result_dir': output_spec['result_dir']
         }
         # write input json for matlab script
