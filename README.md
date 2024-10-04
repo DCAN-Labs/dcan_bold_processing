@@ -137,18 +137,6 @@ final concatenation:
                         determines which tasks will be parcellated, so a
                         single task may be input to parcellate it. Required
                         for this stage. May be a list of one.
-
-References
-----------
-
-[1] Fair DA, Miranda-Dominguez O, et al. Correction of respiratory artifacts
-in MRI head motion estimates. bioRxiv [Internet]. 2018 Jan 1; Available from:
-http://biorxiv.org/content/early/2018/06/07/337360.abstract
-[2] Power J, et al. Methods to detect, characterize, and remove motion
-artifact in resting state fMRI. Neuroimage [Internet]. Elsevier Inc.; 2014
-Jan 1 [cited 2014 Jul 9];84:32041. doi: 10.1016/j.neuroimage.2013.08.048
-[3] Friston KJ, et al. Movement-related effects in fMRI time-series. Magn
-Reson Med [Internet]. 1996;35(3):34655. doi: 10.1002/mrm.1910350312
 ```
 
 ## Overview
@@ -176,4 +164,12 @@ series is saved along with a 'grayplot' displaying relevant time series data.
 concatenates any resting state data which shares the same bids task name, 
 also concatenates any FD numbers and saves out a matlab (hdf5) file with 
 various FD threshold masks computed.
+
+## References
+
+[1] Damien A. Fair, Oscar Miranda-Dominguez, et al. Correction of respiratory artifacts in MRI head motion estimates. NeuroImage, Volume 208, 2020, [doi:10.1016/j.neuroimage.2013.08.048](https://doi.org/10.1016/j.neuroimage.2019.116400).
+
+[2] Power J, et al. Methods to detect, characterize, and remove motion artifact in resting state fMRI. Neuroimage [Internet]. Elsevier Inc.; 2014 Jan 1 [cited 2014 Jul 9];84:32041. doi:10.1016/j.neuroimage.2013.08.048
+
+[3] Friston KJ, et al. Movement-related effects in fMRI time-series. Magn Reson Med [Internet]. 1996;35(3):34655. doi:10.1002/mrm.1910350312
 
