@@ -52,6 +52,7 @@ switch filt_type
     case 'notch'
         
         fc_RR_bw = [fc_RR_min, fc_RR_max];
+        fc_RR_bw
         rr = fc_RR_bw / 60;
 
         fs = 1 / TR;
@@ -63,9 +64,10 @@ switch filt_type
         Wn = mean(W_notch);
         Wd = diff(W_notch);
         bw = abs(Wd); % take the absolute value in order to ensure that the difference between the min and max is not negative
-        % [b_filt, a_filt] = iirnotch(Wn, bw);
+        % [b_filt, a_filt] = iirnotch(Wn, bw); % iirnotch to be removed in R2024a
         [b_filt,a_filt] = designNotchPeakIIR(CenterFrequency=Wn,Bandwidth=bw,Response="notch");
-        num_f_apply = floor(order / 2); % if order<4 apply filter 1x, if order=4 2x, if order=6 3x
+        num_f_apply = floor(order / 2); % halve since we use 2nd order IIR filter
+
 
 end
 
@@ -99,28 +101,28 @@ for i=1:n
             MR_filt(:,2) = 0;
             
         case 3 %'Filt_all';
-            MR_filt = filter(b_filt,a_filt,MR_ld);
-            for i=1:num_f_apply-1
+            MR_filt = MR_ld;
+            for i=1:num_f_apply
                 MR_filt = filter(b_filt,a_filt,MR_filt);
             end
             
         case 4 %'Filt_only_Y';
             MR_filt = MR_ld;
-            MR_filt(:,2) = filter(b_filt,a_filt,MR_ld(:,2));
-            for i=1:num_f_apply-1
+            for i=1:num_f_apply
                 MR_filt(:,2) = filter(b_filt,a_filt,MR_filt(:,2));
             end
             
         case 5 %'FiltFilt_all';
-            MR_filt = filtfilt(b_filt,a_filt,MR_ld);
-            for i=1:num_f_apply-1
+            num_f_apply = floor(num_f_apply / 2); % halve since filtfilt applies filter twice
+            MR_filt = MR_ld;
+            for i=1:num_f_apply
                 MR_filt = filtfilt(b_filt,a_filt,MR_filt);
             end
             
         case 6 %'FiltFilt_only_Y';
+            num_f_apply = floor(num_f_apply / 2); % halve since filtfilt applies filter twice
             MR_filt = MR_ld;
-            MR_filt(:,2) = filtfilt(b_filt,a_filt,MR_ld(:,2));
-            for i=1:num_f_apply-1
+            for i=1:num_f_apply
                 MR_filt(:,2) = filtfilt(b_filt,a_filt,MR_filt(:,2));
             end
     end
