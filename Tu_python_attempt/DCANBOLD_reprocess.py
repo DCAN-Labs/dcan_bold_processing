@@ -9,7 +9,6 @@ Args:
 Use python DCANBOLD_reprocess.py -h to see the arguments
 
 Requirements:
-Connectome Workbench (1.2.3) - need to state your machine's workbench path using --path-wb-c <workbench_path>
 Python 3 (3.8.10)
 numpy (1.24.4)
 scipy (1.10.1)
@@ -52,7 +51,6 @@ def main():
     parser.add_argument('--results-path',type=str, help='results folder to save cleaned BOLD data',required=True)
     parser.add_argument('--json-path',type=str,help='full path to json file for parameters and input file names, set to \'\' for default for ABCD in WashU NIL drive')
     parser.add_argument('--GSR',type=int,help='include Global Signal Regression (CSF, WM, GM, and their derivatives) [1] or not [0]',required=True)
-    parser.add_argument('--path-wb-c',type=str,default='/usr/local/bin/wb_command',help='workbench path on your machine')
     parser.add_argument('--FD-type',type=int,default=1,help='L1 [1] (default) or L2 [2]')
     parser.add_argument('--brain-radius-mm',type=int,default=50,help='ballpark estimate of brain radius in mm, default = 50')
     args = parser.parse_args()
@@ -73,7 +71,6 @@ def main():
     # Update paths
     json_input['FD_type'] = args.FD_type
     json_input['brain_radius_mm'] = args.brain_radius_mm
-    json_input['path_wb_c'] = args.path_wb_c
     json_input['GSR'] = args.GSR
     if json_input['GSR']:
         json_input['result_dir'] = os.path.join(results_path,subject_id,task_id,'DCANBOLDProc_v4.0.0','gsr')
@@ -85,6 +82,7 @@ def main():
     json_input['file_wm'] = str.replace(json_input['file_wm'],'/output/',data_path)
     json_input['config'] = os.path.join(json_input['result_dir'],'DCANBOLDProc_v4.0.0_mat_config.json')
     json_input.pop('path_ex_sum')
+    json_input.pop('path_wb_c')
 
     # Save the parameters in the results folder
     directory_path = Path(json_input['result_dir'])
