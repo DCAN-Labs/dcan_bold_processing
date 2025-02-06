@@ -204,7 +204,11 @@ def main():
     np.savetxt(FD_file_name, FD)
     logging.info("Mean FD = " + str(meanFD))
     # Now state the frames to keep for the processing (Line 78 in dcan_bold_processing.m)
-    keepframe = FD <= json_input["fd_th"]
+    if json_input["fd_th"] > 0:
+        keepframe = FD <= json_input["fd_th"]
+    else:
+        keepframe = np.full(len(FD),True)
+        logging.info("FD threshold not applied")
     skip_frames = np.int8(np.floor(json_input["skip_seconds"] / TR))
     keepframe[:skip_frames] = False
     logging.info("Retained frames = " + str(np.sum(keepframe)))
@@ -290,7 +294,7 @@ def main():
     y_removed = np.apply_along_axis(
         lambda col: np.interp(x_removed, x, col[keepframe]), axis=0, arr=data_postreg
     )
-    # Replace extrapolated points with the mean of retained low-motion data
+    # Replace extrapolated points with the mean of retained low-motion data ----> 6 parameters
     y_mean = np.mean(data_postreg[keepframe, :], axis=0)
     y_removed[x_outsidebound, :] = y_mean
 

@@ -3,7 +3,6 @@
 # activate the python virtual environment (the packages are stored here)
 source /data/wheelock/data1/people/Cindy/BCP/SystemMaturity/neuroHarmonize/bin/activate # if looping over subject this can be run once only
 
-
 data_path='/data/Daenerys/ABCD/data/abcd_collection3165/derivatives/abcd-hcp-pipeline/'
 results_path='/data/wheelock/data1/datasets/ABCD/derivatives/' 
 
