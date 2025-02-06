@@ -6,3 +6,9 @@ templates/parcellations/
 *.nii
 *.mat
 ._*
+./*/*backup*
+./*/test*
+__pycache__/*
+Tu_python_attempt/old/*
+Tu_python_attempt/__pycache__/*
+example_config_json/*

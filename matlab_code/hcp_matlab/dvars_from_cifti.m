@@ -1,4 +1,4 @@
-function DVAR=dvars_from_cifti(X);
+function DVAR=dvars_from_cifti(X)
 % This  function calculates dvars based on grayordinates (WM and non brain excluded)
 
 %% Check size

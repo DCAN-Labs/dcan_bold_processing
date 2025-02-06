@@ -1,4 +1,6 @@
-# dcan signal processing
+# dcan signal processing 
+
+2024.12.01 - add DCANBOLD_reprocess.py to redo the confound removal part ([task] mode below) for minor differences (e.g. no GSR/different movement parameter file/etc) with an all-inclusive Python script that does not need anything else (MATLAB or toolboxes or Connectome Workbench) except for some basic python packages (numpy,scipy,matplotloib,nibabel) installed.
 
 \*\*
 This is a repository for the dcan labs bold signal processing. It is 
