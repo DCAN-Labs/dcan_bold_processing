@@ -63,8 +63,9 @@ switch filt_type
         Wn = mean(W_notch);
         Wd = diff(W_notch);
         bw = abs(Wd); % take the absolute value in order to ensure that the difference between the min and max is not negative
-        [b_filt, a_filt] = iirnotch(Wn, bw);
-        num_f_apply = floor(order / 2); % if order<4 apply filter 1x, if order=4 2x, if order=6 3x
+        [b_filt, a_filt] = iirnotch(Wn, bw); % iirnotch to be removed in R2024a
+        num_f_apply = floor(order / 2); % halve since we use 2nd order IIR filter
+
 
 end
 
@@ -98,28 +99,28 @@ for i=1:n
             MR_filt(:,2) = 0;
             
         case 3 %'Filt_all';
-            MR_filt = filter(b_filt,a_filt,MR_ld);
-            for i=1:num_f_apply-1
+            MR_filt = MR_ld;
+            for i=1:num_f_apply
                 MR_filt = filter(b_filt,a_filt,MR_filt);
             end
             
         case 4 %'Filt_only_Y';
             MR_filt = MR_ld;
-            MR_filt(:,2) = filter(b_filt,a_filt,MR_ld(:,2));
-            for i=1:num_f_apply-1
+            for i=1:num_f_apply
                 MR_filt(:,2) = filter(b_filt,a_filt,MR_filt(:,2));
             end
             
         case 5 %'FiltFilt_all';
-            MR_filt = filtfilt(b_filt,a_filt,MR_ld);
-            for i=1:num_f_apply-1
+            num_f_apply = floor(num_f_apply / 2); % halve since filtfilt applies filter twice
+            MR_filt = MR_ld;
+            for i=1:num_f_apply
                 MR_filt = filtfilt(b_filt,a_filt,MR_filt);
             end
             
         case 6 %'FiltFilt_only_Y';
+            num_f_apply = floor(num_f_apply / 2); % halve since filtfilt applies filter twice
             MR_filt = MR_ld;
-            MR_filt(:,2) = filtfilt(b_filt,a_filt,MR_ld(:,2));
-            for i=1:num_f_apply-1
+            for i=1:num_f_apply
                 MR_filt(:,2) = filtfilt(b_filt,a_filt,MR_filt(:,2));
             end
     end
@@ -132,6 +133,9 @@ for i=1:n
     %% The last 6 movement regressors are derivatives of the first 6. Needed for task fMRI, but not used in the Fair Lab
     second_derivs=cat(1, [0 0 0 0 0 0], diff(MR_backed(:,1:6)));
     MR_backed = [MR_backed second_derivs];
+
+    % [path_orig, file_orig, ext_orig] = fileparts(file_mov_reg);
+    dlmwrite(output_mm, MR_filt, ' ');
    
     % [path_orig, file_orig, ext_orig] = fileparts(file_mov_reg);
     dlmwrite(output, MR_backed, ' ');
