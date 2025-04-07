@@ -133,9 +133,6 @@ for i=1:n
     %% The last 6 movement regressors are derivatives of the first 6. Needed for task fMRI, but not used in the Fair Lab
     second_derivs=cat(1, [0 0 0 0 0 0], diff(MR_backed(:,1:6)));
     MR_backed = [MR_backed second_derivs];
-
-    % [path_orig, file_orig, ext_orig] = fileparts(file_mov_reg);
-    dlmwrite(output_mm, MR_filt, ' ');
    
     % [path_orig, file_orig, ext_orig] = fileparts(file_mov_reg);
     dlmwrite(output, MR_backed, ' ');
