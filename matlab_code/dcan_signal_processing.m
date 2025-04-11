@@ -21,13 +21,14 @@ path_cii= conf_json.path_cii;
 path_ex_sum= conf_json.path_ex_sum;
 FNL_preproc_CIFTI_basename= conf_json.FNL_preproc_CIFTI_basename;
 fMRIName= conf_json.fMRIName;
+gsr = conf_json.gsr;
 file_wm= conf_json.file_wm;
 file_vent= conf_json.file_vent;
 file_mov_reg= conf_json.file_mov_reg;
 motion_filename= conf_json.motion_filename;
 skip_seconds= conf_json.skip_seconds;
 result_dir= conf_json.result_dir;
-brain_radius_in_mm = conf_json.brain_radius_in_mm
+brain_radius_in_mm = conf_json.brain_radius_in_mm;
 brain_radius_in_cm= brain_radius_in_mm * 0.1;
 int_method= 'linear';
 %silence warnings
@@ -85,8 +86,11 @@ th = th==1;
 WB = mean(X)';
 try
     % 	    R=conc_and_detrend(wm, vent, WB, FR);
-    
-    R = conc(wm, vent, WB, FR);
+    if gsr == 1
+        R = conc(wm, vent, WB, FR);
+    else
+        R = conc_no_wb(wm, vent, FR);
+    end
     mR = mean(R(th, :));
     R = R-mR;
     n_reg = size(R, 2);
