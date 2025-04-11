@@ -53,6 +53,8 @@ def _cli():
         'task': args.task,
         'output_folder': args.output_folder,
         'legacy_tasknames': args.legacy_tasknames,
+        'legacy_motion_filter': args.legacy_motion_filter,
+        'no_gsr': args.no_gsr,
         'fd_threshold': args.fd_threshold,
         'contiguous_frames': args.contiguous_frames,
         'filter_order': args.filter_order,
@@ -150,6 +152,10 @@ def generate_parser(parser=None):
         help='number of filter coefficients for butterworth bandpass filter.'
     )
     bold_filter.add_argument(
+        '--no-gsr', action='store_true',
+        help='enable this to exclude global signal column from the signal regressors. '         
+    )
+    bold_filter.add_argument(
         '--lower-bpf', type=float, default=0.009,
         help='lower cut-off frequency (Hz) for the butterworth bandpass '
              'filter.'
@@ -188,6 +194,13 @@ def generate_parser(parser=None):
     fd.add_argument(
        '--motion-filter-order', type=int, default=4,
        help='number of filter coeffecients for the band-stop filter.'
+    )
+    fd.add_argument(
+        '--legacy-motion-filter', action='store_true',
+        help='enable this to make bandstop motion filter behavior match that of '
+             'dcan_bold_processing < 4.2.0. Specifically, if using bidirectional '
+             'filter (filtfilt), the number of filter repetitions will be doubled '
+             'compared to running without this option. '         
     )
     fd.add_argument(
         '--band-stop-min', type=float_or_None,
@@ -231,12 +244,12 @@ def generate_parser(parser=None):
 
 def interface(subject, output_folder, task=None, fd_threshold=None,
               filter_order=None, lower_bpf=None, upper_bpf=None,
-              motion_filter_type=None, motion_filter_option=None,
-              motion_filter_order=None, band_stop_min=None,
-              band_stop_max=None, skip_seconds=None, brain_radius=None,
-              contiguous_frames=None, setup=False, teardown=None,
-              tasklist=None, fmri_res=2., roi_res=2., no_aparc=False,
-              legacy_tasknames=False, **kwargs):
+              no_gsr=False, motion_filter_type=None, motion_filter_option=None,
+              motion_filter_order=None, legacy_motion_filter=False,
+              band_stop_min=None, band_stop_max=None, skip_seconds=None,
+              brain_radius=None, contiguous_frames=None, setup=False,
+              teardown=None, tasklist=None, fmri_res=2., roi_res=2.,
+              no_aparc=False, legacy_tasknames=False, **kwargs):
     """
     main function with 3 modes:
         setup, task, and teardown.
@@ -260,6 +273,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
     :param filter_order: order of bold signal bandpass filter
     :param lower_bpf: lower limit of bold signal bandpass filter
     :param upper_bpf: upper limit of bold signal bandpass filter
+    :param no_gsr: disable global signal regression 
     :param motion_filter_type: type of bandstop filter for filtering motion
     regressors.  Default: 'notch'
     :param motion_filter_option: dimensions along which to filter motion.
@@ -480,6 +494,10 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 '%s_bs%s_%s_filtered_%s' % (version_name, band_stop_min,
                                             band_stop_max, movreg_basename)
                 )
+            # if using legacy filter option and bidirectional filter (filtfilt),
+            # then double the filter order so that the filter behavior matches 4.1.x 
+            if legacy_motion_filter and motion_filter_option in [5,6]:
+                motion_filter_order = motion_filter_order * 2
             executable = os.path.join(
                 here, 'bin', 'run_filtered_movement_regressors.sh')
             cmd = [executable, os.environ['MCRROOT'],
@@ -511,6 +529,10 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                         output_spec['wm_mean_signal'], fmri_res, roi_res)
         mean_roi_signal(input_spec['fmri_volume'], output_spec['vent_mask'],
                         output_spec['vent_mean_signal'], fmri_res, roi_res)
+        if no_gsr:
+            gsr = 0
+        else:
+            gsr = 1
 
         # run signal processing on dtseries
         matlab_input = {
@@ -524,6 +546,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
             'path_ex_sum': output_spec['summary_folder'],
             'FNL_preproc_CIFTI_basename': input_spec['output_dtseries_basename'],
             'fMRIName': task,
+            'gsr': gsr,
             'file_wm': output_spec['wm_mean_signal'],
             'file_vent': output_spec['vent_mean_signal'],
             'file_mov_reg': input_spec['movement_regressors'],
