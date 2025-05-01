@@ -1,0 +1,18 @@
+{
+    "FNL_preproc_CIFTI_basename": "task-rest01_DCANBOLDProc_v4.0.0_Atlas",
+    "TR": 0.8,
+    "bp_order": 2,
+    "fMRIName": "task-rest01",
+    "fd_th": 0.3,
+    "file_mov_reg": "/output/sub-NDARINV0A4P0LWM/ses-baselineYear1Arm1/files/MNINonLinear/Results/task-rest01/DCANBOLDProc_v4.0.0/DCANBOLDProc_v4.0.0_bs18.582_25.7263_filtered_Movement_Regressors.txt",
+    "file_vent": "/output/sub-NDARINV0A4P0LWM/ses-baselineYear1Arm1/files/MNINonLinear/Results/task-rest01/DCANBOLDProc_v4.0.0/task-rest01_vent_mean.txt",
+    "file_wm": "/output/sub-NDARINV0A4P0LWM/ses-baselineYear1Arm1/files/MNINonLinear/Results/task-rest01/DCANBOLDProc_v4.0.0/task-rest01_wm_mean.txt",
+    "hp_Hz": 0.08,
+    "lp_Hz": 0.009,
+    "motion_filename": "motion_numbers.txt",
+    "path_cii": "/output/sub-NDARINV0A4P0LWM/ses-baselineYear1Arm1/files/MNINonLinear/Results/task-rest01/task-rest01_Atlas.dtseries.nii",
+    "path_ex_sum": "/output/sub-NDARINV0A4P0LWM/ses-baselineYear1Arm1/files/summary_DCANBOLDProc_v4.0.0",
+    "path_wb_c": "/opt/workbench/bin_linux64/wb_command",
+    "result_dir": "/output/sub-NDARINV0A4P0LWM/ses-baselineYear1Arm1/files/MNINonLinear/Results/task-rest01/DCANBOLDProc_v4.0.0",
+    "skip_seconds": 5
+}
