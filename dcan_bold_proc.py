@@ -325,11 +325,17 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         'vent_mask': os.path.join(output_folder, 'MNINonLinear',
                                   'vent_%gmm_%s_mask_eroded.nii.gz' % \
                                       (fmri_res, subject)),
+        'vent_mask_non_eroded': os.path.join(output_folder, 'MNINonLinear',
+                                  'vent_%gmm_%s_mask_non_eroded.nii.gz' % \
+                                      (fmri_res, subject)),
         'vent_mean_signal': os.path.join(output_folder, 'MNINonLinear',
                                          'Results', task, version_name,
                                          '%s_vent_mean.txt' % task),
         'wm_mask': os.path.join(output_folder, 'MNINonLinear',
                                 'wm_%gmm_%s_mask_eroded.nii.gz' % \
+                                    (fmri_res, subject)),
+        'wm_mask_non_eroded': os.path.join(output_folder, 'MNINonLinear',
+                                'wm_%gmm_%s_mask_non_eroded.nii.gz' % \
                                     (fmri_res, subject)),
         'wm_mean_signal': os.path.join(output_folder, 'MNINonLinear',
                                        'Results', task, version_name,
@@ -368,7 +374,8 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
 
         # create white matter and ventricle masks for regression
         make_masks(input_spec['segmentation'], output_spec['wm_mask'],
-                   output_spec['vent_mask'], fmri_res=fmri_res,
+                   output_spec['wm_mask_non_eroded'], output_spec['vent_mask'], 
+                   output_spec['vent_mask_non_eroded'], fmri_res=fmri_res,
                    roi_res=roi_res, **label_override)
 
     elif teardown:
@@ -622,7 +629,8 @@ def mean_roi_signal(fmri, mask, output, fmri_res=2., roi_res=2.):
     subprocess.call(cmd.split())
 
 
-def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
+def make_masks(segmentation, wm_mask_out, wm_mask_non_eroded_out,
+               vent_mask_out, vent_mask_non_eroded_out, **kwargs):
     """
     generates ventricular and white matter masks from a Desikan/FreeSurfer
     segmentation file.  label constraints may be overridden.
@@ -655,7 +663,9 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
     iofiles = {
         'segmentation': segmentation,
         'wm_mask_out': wm_mask_out,
-        'vent_mask_out': vent_mask_out
+        'wm_mask_non_eroded_out': wm_mask_non_eroded_out,
+        'vent_mask_out': vent_mask_out,
+        'vent_mask_non_eroded_out': vent_mask_non_eroded_out,
     }
     # command pipeline
     cmdlist = [
@@ -663,12 +673,14 @@ def make_masks(segmentation, wm_mask_out, vent_mask_out, **kwargs):
         'fslmaths {segmentation} -thr {wm_lt_L} -uthr {wm_ut_L} {wm_mask_L}',
         'fslmaths {wm_mask_R} -add {wm_mask_L} -bin {wm_mask}',
         'fslmaths {wm_mask} -kernel gauss {roi_res:g} -ero {wm_mask_out}',
+        'cp {wm_mask} {wm_mask_non_eroded_out}',
         'fslmaths {segmentation} -thr {vent_lt_R} -uthr {vent_ut_R} '
         '{vent_mask_R}',
         'fslmaths {segmentation} -thr {vent_lt_L} -uthr {vent_ut_L} '
         '{vent_mask_L}',
         'fslmaths {vent_mask_R} -add {vent_mask_L} -bin {vent_mask}',
-        'fslmaths {vent_mask} -kernel gauss {roi_res:g} -ero {vent_mask_out}'
+        'fslmaths {vent_mask} -kernel gauss {roi_res:g} -ero {vent_mask_out}',
+        'cp {vent_mask} {vent_mask_non_eroded_out}'
     ]
 
     # get params
