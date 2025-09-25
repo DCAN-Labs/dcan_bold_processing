@@ -25,7 +25,7 @@ function analyses_v2(config_path)
 
     % @ WARNING This is a hard coded expected file path...
     temp_files = sorter([summary_Dir filesep 'temp_grayplotdata_' ...
-        taskname '*.mat'],taskname);
+        taskname '_*.mat'],taskname);
     cat_FD = [];
     cat_DVAR_pre_reg = [];
     cat_DVAR_post_reg = [];
@@ -169,7 +169,7 @@ function analyses_v2(config_path)
     % copy <taskname>_FD*.txt into <taskname>_all_FD.txt
     system(['rm -f ' summary_Dir filesep taskname '_all_FD.txt']);
 
-    system(['cat ' summary_Dir filesep 'FD_' taskname '*.txt >> ' summary_Dir filesep taskname '_all_FD.txt']);
+    system(['cat ' summary_Dir filesep 'FD_' taskname '_*.txt >> ' summary_Dir filesep taskname '_all_FD.txt']);
 
     FD = dlmread([summary_Dir filesep taskname '_all_FD.txt']);
     hist(FD, 100, 'facecolor', 'g')

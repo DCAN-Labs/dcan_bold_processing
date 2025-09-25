@@ -20,7 +20,7 @@ else %% get run indexes for this task
         %% suffix added by fMRIPrep)       
 
         filename=[path_contents(ii).folder filesep path_contents(ii).name];
-        tokens=regexp(filename,[taskname '(_run-)?([0-9]+).*'],'tokens');
+        tokens=regexp(filename,[taskname '_(run-)?([0-9]+).*'],'tokens');
         ix_ls(ii)=str2num(tokens{1,1}{1,2})
     end
 end

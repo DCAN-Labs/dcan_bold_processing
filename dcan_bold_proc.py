@@ -397,11 +397,13 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
         concatlist = []
         for commalist in tasklist:
             for bids_task in tasknames:
-                if bids_task in commalist:
+                # add enclosing underscores to prevent a match in the case bids_task is a 
+                # substring of another task present in the session, e.g. "task-rest" and "task-rest2"
+                if "_" + bids_task + "_" in commalist:
                     concatlist.append([d for d in commalist.split(',')
                                        if os.path.isdir(os.path.join(output_results,d))
-                                       and bids_task in d ])
-
+                                       and "_" + bids_task + "_" in d ])
+        print(concatlist)
         concatenate(concatlist, output_folder, legacy_tasknames)
         parcellate(concatlist, output_folder, legacy_tasknames)
 
@@ -447,7 +449,7 @@ def interface(subject, output_folder, task=None, fd_threshold=None,
                 'result_dir': os.path.join(analysis_folder,'motion'),
                 'path_motion_numbers': os.path.join(output_folder,
                                                     'MNINonLinear',
-                                                    'Results', taskset + '*',
+                                                    'Results', taskset + '_*',
                                                     version_name,
                                                     'motion_numbers.txt'),
                 'path_ciftis': os.path.join(output_folder, 'MNINonLinear', 'Results'),
